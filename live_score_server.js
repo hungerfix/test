@@ -3,6 +3,7 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const zlib = require('zlib');
 
 // ========== CRASH PROTECTION ==========
 process.on('uncaughtException', (err) => {
@@ -20,6 +21,7 @@ function detectProvider(u) {
   if (!u) return 'none';
   if (u.includes('crex.com')) return 'crex';
   if (u.includes('heroliveline.com')) return 'hero';
+  if (u.includes('cricketfastliveline.in')) return 'cfll';
   return 'cricbuzz';
 }
 
@@ -686,6 +688,432 @@ async function fetchCrexScore() {
   }
 }
 
+// ========== CRICKETFASTLIVELINE.IN (CFLL) PROVIDER ==========
+
+// Cache for the CFLL Next.js build ID (changes on deploys)
+let cfllBuildId = null;
+let cfllBuildIdFetchedAt = 0;
+const CFLL_BUILDID_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Extract match slug and ID from CFLL URL
+function extractCfllInfo(cfllUrl) {
+  // URL pattern: /live-score/{slug}/{matchId}
+  const m = cfllUrl.match(/\/live-score\/([^\/]+)\/([^\/\?]+)/);
+  if (!m) return null;
+  return { slug: m[1], matchId: m[2] };
+}
+
+// Discover the Next.js build ID from CFLL pages
+async function fetchCfllBuildId() {
+  // Return cached if fresh
+  if (cfllBuildId && (Date.now() - cfllBuildIdFetchedAt) < CFLL_BUILDID_TTL) {
+    return cfllBuildId;
+  }
+  try {
+    const html = await fetchUrl('https://cricketfastliveline.in/');
+    // Look for /_next/data/{buildId}/ in script tags or __NEXT_DATA__
+    const m = html.match(/\/_next\/data\/([a-zA-Z0-9_-]+)\//) ||
+      html.match(/"buildId"\s*:\s*"([^"]+)"/);
+    if (m) {
+      cfllBuildId = m[1];
+      cfllBuildIdFetchedAt = Date.now();
+      console.log(`  [CFLL] Discovered buildId: ${cfllBuildId}`);
+      return cfllBuildId;
+    }
+    console.log('  [CFLL] Could not find buildId in homepage');
+    return null;
+  } catch (e) {
+    console.log('  [CFLL] BuildId fetch error:', e.message);
+    return cfllBuildId; // return stale if available
+  }
+}
+
+// Decompress base64+zlib postData from CFLL Next.js endpoint
+function decompressCfllData(b64str) {
+  return new Promise((resolve, reject) => {
+    const buf = Buffer.from(b64str, 'base64');
+    zlib.inflate(buf, (err, result) => {
+      if (err) return reject(err);
+      try {
+        resolve(JSON.parse(result.toString('utf8')));
+      } catch (e) {
+        reject(e);
+      }
+    });
+  });
+}
+
+// Main CFLL fetch and parse function
+async function fetchCfllScore() {
+  try {
+    console.log(`\n[CFLL] Fetching at ${new Date().toLocaleTimeString()}...`);
+
+    const info = extractCfllInfo(matchUrl);
+    if (!info) {
+      scoreData.error = 'Could not parse CFLL URL — expected /live-score/{slug}/{matchId}';
+      return;
+    }
+
+    const buildId = await fetchCfllBuildId();
+    if (!buildId) {
+      scoreData.error = 'Could not discover CFLL build ID';
+      return;
+    }
+
+    const apiUrl = `https://cricketfastliveline.in/_next/data/${buildId}/live-score/${info.slug}/${info.matchId}.json`;
+    const raw = await fetchUrl(apiUrl);
+
+    let json;
+    try { json = JSON.parse(raw); } catch (e) {
+      // Build ID may have changed — invalidate and retry next cycle
+      console.log('  [CFLL] JSON parse failed — buildId may be stale, invalidating');
+      cfllBuildId = null;
+      cfllBuildIdFetchedAt = 0;
+      scoreData.error = 'CFLL response not JSON — buildId may have changed';
+      return;
+    }
+
+    if (!json.pageProps || !json.pageProps.postData) {
+      scoreData.error = 'CFLL response missing pageProps.postData';
+      return;
+    }
+
+    // Decode the compressed payload
+    let data;
+    try {
+      data = await decompressCfllData(json.pageProps.postData);
+    } catch (e) {
+      scoreData.error = 'CFLL decompress error: ' + e.message;
+      return;
+    }
+
+    const match = Array.isArray(data) ? data[0] : data;
+    if (!match) {
+      scoreData.error = 'CFLL: no match data in decoded payload';
+      return;
+    }
+
+    const ds = match.datases || {};
+    const live = match.statesdata || {};
+    const mi = (match.matchinfodata && match.matchinfodata[0]) || {};
+    const comm = match.commentrydata || [];
+    const teamsInfo = ds.teams || {};
+    const teamA = teamsInfo.a || {};
+    const teamB = teamsInfo.b || {};
+
+    // ---- Provider ----
+    scoreData.provider = 'cfll';
+
+    // ---- Match Info ----
+    scoreData.matchInfo = {
+      description: ds.short_name || ds.name || `${match.bt || '--'} vs ${match.bot || '--'}`,
+      format: ds.format || match.format || '',
+      status: live.message || live.message_text || (ds.status === 'started' ? 'In Progress' : ds.status || ''),
+      venue: ds.venue || mi.venue || match.venue || '',
+      state: ds.status === 'started' ? 'In Progress' : (ds.status === 'completed' ? 'Complete' : (ds.status || '')),
+      toss: ds.toss ? `${ds.toss} won the toss and chose to ${ds.decision || 'bat'}` : '',
+      result: live.message || live.message_text || ds.result || ''
+    };
+
+    // ---- Team info with flag images from GCS ----
+    const t1Key = teamA.key || ds.t1_id || '';
+    const t2Key = teamB.key || ds.t2_id || '';
+    const gcsBase = 'https://storage.googleapis.com/download/storage/v1/b/firestore-cfll.appspot.com/o/teams%2F';
+
+    scoreData.team1 = {
+      name: teamA.name || match.bt || ds.bt || '--',
+      shortName: teamA.sn || teamA.abbr || ds.bsn || '--',
+      id: t1Key,
+      flagUrl: t1Key ? `${gcsBase}${encodeURIComponent(t1Key)}.png?alt=media` : '',
+      jerseyUrl: '',
+      gradient: ds.t1_colour_primary || '',
+      colors: { primary: ds.t1_colour_primary || '', secondary: ds.t1_colour_secondary || '' }
+    };
+    scoreData.team2 = {
+      name: teamB.name || match.bot || ds.bot || '--',
+      shortName: teamB.sn || teamB.abbr || ds.bosn || '--',
+      id: t2Key,
+      flagUrl: t2Key ? `${gcsBase}${encodeURIComponent(t2Key)}.png?alt=media` : '',
+      jerseyUrl: '',
+      gradient: ds.t2_colour_primary || '',
+      colors: { primary: ds.t2_colour_primary || '', secondary: ds.t2_colour_secondary || '' }
+    };
+
+    // ---- Innings ----
+    const currentInning = parseInt(ds.inning_id || live.inning_id) || 1;
+    const innings = [];
+
+    // Current batting team innings
+    innings.push({
+      id: currentInning,
+      battingTeamId: ds.curr_bt_tid || t1Key,
+      battingTeam: ds.bt || teamA.name || '--',
+      battingTeamShort: ds.bsn || teamA.sn || '--',
+      score: parseInt(live.run || ds.run) || 0,
+      wickets: parseInt(live.wicket || ds.wicket) || 0,
+      overs: parseFloat(live.over || ds.over) || 0,
+      isDeclared: false,
+      runRate: ds.team_1_crr || '0.00'
+    });
+
+    // Other team innings (if target exists = 2nd innings)
+    if (ds.other_team_score) {
+      innings.unshift({
+        id: currentInning - 1 || 1,
+        battingTeamId: ds.curr_bt_tid === t1Key ? t2Key : t1Key,
+        battingTeam: ds.bot || teamB.name || '--',
+        battingTeamShort: ds.bosn || teamB.sn || '--',
+        score: parseInt(ds.other_team_score) || 0,
+        wickets: parseInt(ds.other_team_wicket) || 0,
+        overs: parseFloat(ds.other_team_overs) || 0,
+        isDeclared: false,
+        runRate: '0.00'
+      });
+    }
+
+    scoreData.innings = innings;
+    scoreData.currentInnings = currentInning;
+
+    // ---- Determine striker (strick field: strick_1 or strick_2) ----
+    const isStriker1 = (live.strick === 'strick_1');
+    const strikerLabel = isStriker1 ? '1' : '2';
+    const nonStrikerLabel = isStriker1 ? '2' : '1';
+
+    // ---- Miniscore ----
+    const currentInn = innings[innings.length - 1] || {};
+    const target = parseInt(ds.target || live.target) || 0;
+    const crr = parseFloat(ds.team_1_crr) || (currentInn.overs > 0 ? (currentInn.score / currentInn.overs).toFixed(2) : 0);
+    // Calculate RRR if chasing
+    let rrr = 0;
+    if (target > 0 && currentInning >= 2) {
+      const remaining = target - currentInn.score;
+      const maxBalls = ds.format === 't20' ? 120 : (ds.format === 'odi' ? 300 : 0);
+      const ballsBowled = Math.floor(currentInn.overs) * 6 + Math.round((currentInn.overs % 1) * 10);
+      const ballsLeft = maxBalls - ballsBowled;
+      if (ballsLeft > 0) rrr = ((remaining / ballsLeft) * 6).toFixed(2);
+    }
+
+    scoreData.miniscore = {
+      inningsId: currentInning,
+      battingTeam: {
+        id: ds.curr_bt_tid || t1Key,
+        score: currentInn.score || 0,
+        wickets: currentInn.wickets || 0
+      },
+      batsmanStriker: (live['batsman_' + strikerLabel] && live['batsman_' + strikerLabel] !== '-') ? {
+        name: live['batsman_' + strikerLabel] || '--',
+        fullName: live['batsman_' + strikerLabel] || '',
+        playerKey: live['batsman_' + strikerLabel + '_playerId'] || '',
+        runs: parseInt(live['batsman_' + strikerLabel + '_run']) || 0,
+        balls: parseInt(live['batsman_' + strikerLabel + '_ball']) || 0,
+        fours: parseInt(live['batsman_' + strikerLabel + '_fours']) || 0,
+        sixes: parseInt(live['batsman_' + strikerLabel + '_sixis']) || 0,
+        strikeRate: parseFloat(live['batsman_' + strikerLabel + '_strike_rate']) || 0
+      } : null,
+      batsmanNonStriker: (live['batsman_' + nonStrikerLabel] && live['batsman_' + nonStrikerLabel] !== '-') ? {
+        name: live['batsman_' + nonStrikerLabel] || '--',
+        fullName: live['batsman_' + nonStrikerLabel] || '',
+        playerKey: live['batsman_' + nonStrikerLabel + '_playerId'] || '',
+        runs: parseInt(live['batsman_' + nonStrikerLabel + '_run']) || 0,
+        balls: parseInt(live['batsman_' + nonStrikerLabel + '_ball']) || 0,
+        fours: parseInt(live['batsman_' + nonStrikerLabel + '_fours']) || 0,
+        sixes: parseInt(live['batsman_' + nonStrikerLabel + '_sixis']) || 0,
+        strikeRate: parseFloat(live['batsman_' + nonStrikerLabel + '_strike_rate']) || 0
+      } : null,
+      bowlerStriker: live.bowler ? {
+        name: live.bowler || '--',
+        fullName: live.bowler_sname || live.bowler || '',
+        playerKey: live.bowler_playerId || '',
+        overs: live.bowler_over || '0',
+        maidens: parseInt(live.bowler_maidan) || 0,
+        runs: parseInt(live.bowler_run) || 0,
+        wickets: parseInt(live.bowler_wicket) || 0,
+        economy: parseFloat(live.bowler_economy_rate) || 0,
+        figures: `${live.bowler_wicket || 0}-${live.bowler_run || 0}`
+      } : null,
+      bowlerNonStriker: null,
+      overs: currentInn.overs || 0,
+      target: target,
+      partnership: {
+        runs: 0,
+        balls: 0
+      },
+      currentRunRate: parseFloat(crr) || 0,
+      requiredRunRate: parseFloat(rrr) || 0,
+      lastWicket: live.lastwicket ? {
+        name: live.lastwicket.name || '',
+        runs: live.lastwicket.run || '0',
+        balls: `(${live.lastwicket.ball || '0'})`
+      } : null,
+      recentOvers: '',
+      lastBall: (live.balls_array && live.balls_array.length > 0) ? live.balls_array[live.balls_array.length - 1] : null,
+      ballsArray: live.balls_array || [],
+      event: '',
+      remRunsToWin: target > 0 ? Math.max(0, target - currentInn.score) : 0,
+      oversRemaining: null,
+      status: live.message || live.message_text || '',
+      // Weather data
+      weather: live.weather || mi.weather || null,
+      // Pitch data
+      pitch: mi.pitch || null
+    };
+
+    // ---- Recent overs from last4overs ----
+    if (live.last4overs && live.last4overs.length > 0) {
+      scoreData.miniscore.recentOvers = live.last4overs.map(ov =>
+        `Over ${ov.over}: ${(ov.balls || []).join(' ')} = ${ov.runs}`
+      ).join(' | ');
+
+      scoreData.miniscore.overByOver = live.last4overs.map(ov => ({
+        over: 'Over ' + ov.over,
+        total: parseInt(ov.runs) || 0,
+        overinfo: ov.balls || []
+      }));
+    }
+
+    // ---- Playing XI ----
+    const buildPlayingXI = (playersObj, teamKey, teamName) => {
+      if (!playersObj) return [];
+      return Object.entries(playersObj)
+        .filter(([, p]) => p.is_playing_xi)
+        .map(([key, p]) => ({
+          id: p.player_id || key,
+          name: p.fname || p.sname || p.shortname || '--',
+          shortName: p.sname || p.shortname || '',
+          role: p.role || {},
+          isCaptain: p.captain || false,
+          isKeeper: p.is_keeper || false,
+          isImpact: p.is_impact || false,
+          isSubstitute: p.is_subsitute || false,
+          batStyle: p.bat_style || '',
+          bowlStyle: p.bowl_style || '',
+          teamId: p.tid || teamKey
+        }));
+    };
+
+    scoreData.playingXI = {
+      team1: buildPlayingXI(mi.t1_players, t1Key, teamA.name),
+      team2: buildPlayingXI(mi.t2_players, t2Key, teamB.name)
+    };
+
+    // ---- Ball-by-ball commentary ----
+    if (comm.length > 0) {
+      scoreData.recentCommentary = comm.slice(0, 30).map(c => {
+        const entry = {
+          type: c.event || 'ball',
+          text: c.commentary || '',
+          event: c.event || '',
+          over: c.over,
+          ball: c.ball,
+          inning: c.inning,
+          runs: c.run || c.score || '',
+          ballsArr: c.balls_arr || []
+        };
+        // Batsman info when available
+        if (c.batsman_1) {
+          entry.batsman = {
+            name: c.batsman_1.name || '',
+            runs: c.batsman_1.runs || '0',
+            balls: c.batsman_1.balls || '0',
+            fours: c.batsman_1.fours || '0',
+            sixes: c.batsman_1.sixes || '0'
+          };
+        }
+        if (c.bowler) {
+          entry.bowler = {
+            name: c.bowler.name || '',
+            overs: c.bowler.overs || '0',
+            runs: c.bowler.runs || '0',
+            wickets: c.bowler.wickets || '0',
+            maidens: c.bowler.maidens || '0'
+          };
+        }
+        return entry;
+      });
+    }
+
+    // ---- Head-to-Head & Team Comparison ----
+    if (mi.h2h_list && mi.h2h_list.length > 0) {
+      scoreData.headToHead = mi.h2h_list.map(h => ({
+        matchId: h.match_id || '',
+        title: h.title || '',
+        relatedName: h.related_name || '',
+        teamA: h.teamAname || '',
+        teamAShort: h.t1_sn || '',
+        teamAScore: h.team_a_score || '',
+        teamAOver: h.team_a_over || '',
+        teamB: h.teamBname || '',
+        teamBShort: h.t2_sn || '',
+        teamBScore: h.team_b_score || '',
+        teamBOver: h.team_b_over || '',
+        result: h.result || '',
+        winner: h.winner_team || ''
+      }));
+    }
+
+    if (mi.team_comparison) {
+      const tc = mi.team_comparison;
+      scoreData.teamComparison = {
+        teamA: { name: tc.teamAname, wins: tc.team_a_win, avgScore: tc.team_a_avg_score, highScore: tc.team_a_high_score, lowScore: tc.team_a_low_score },
+        teamB: { name: tc.teamBname, wins: tc.team_b_win, avgScore: tc.team_b_avg_score, highScore: tc.team_b_high_score, lowScore: tc.team_b_low_score }
+      };
+    }
+
+    // ---- Match extras: umpires, pitch, weather ----
+    scoreData.matchExtras = {
+      umpires: mi.umpire || '',
+      thirdUmpire: mi.third_ump || '',
+      matchRef: mi.match_ref || '',
+      pitch: mi.pitch || null,
+      weather: live.weather || mi.weather || null,
+      paceVenue: mi.pace_venue || '',
+      spinVenue: mi.spin_venue || '',
+      tossComparison: mi.toss_comparison || null,
+      highestTotal: mi.highest_t || '',
+      lowestTotal: mi.lowest_t || '',
+      highestChased: mi.highest_chased || '',
+      lowestChased: mi.lowest_chased || ''
+    };
+
+    // ---- Store raw CFLL data for advanced overlays ----
+    scoreData.cfllRaw = {
+      datases: ds,
+      statesdata: live,
+      matchinfo: mi,
+      commentary: comm.slice(0, 50)
+    };
+
+    scoreData.timestamp = new Date().toISOString();
+    scoreData.error = null;
+
+    // Log summary
+    console.log(`  [CFLL] Match: ${scoreData.matchInfo.description}`);
+    if (scoreData.innings.length > 0) {
+      scoreData.innings.forEach(inn => {
+        console.log(`  Innings ${inn.id}: ${inn.battingTeamShort} ${inn.score}/${inn.wickets} (${inn.overs} ov)`);
+      });
+    }
+    if (scoreData.miniscore) {
+      const ms = scoreData.miniscore;
+      if (ms.batsmanStriker) console.log(`  Bat*: ${ms.batsmanStriker.name} ${ms.batsmanStriker.runs}(${ms.batsmanStriker.balls})`);
+      if (ms.batsmanNonStriker) console.log(`  Bat : ${ms.batsmanNonStriker.name} ${ms.batsmanNonStriker.runs}(${ms.batsmanNonStriker.balls})`);
+      if (ms.bowlerStriker) console.log(`  Bowl: ${ms.bowlerStriker.name} ${ms.bowlerStriker.figures} (${ms.bowlerStriker.overs} ov)`);
+      console.log(`  CRR: ${ms.currentRunRate} | RRR: ${ms.requiredRunRate || '--'}`);
+      if (ms.recentOvers) console.log(`  Recent: ${ms.recentOvers}`);
+    }
+    if (scoreData.playingXI) {
+      const xi1 = scoreData.playingXI.team1 || [];
+      const xi2 = scoreData.playingXI.team2 || [];
+      console.log(`  Playing XI: ${scoreData.team1.shortName}(${xi1.length}) vs ${scoreData.team2.shortName}(${xi2.length})`);
+    }
+    console.log(`  Status: ${scoreData.matchInfo.status || 'Live'}`);
+
+  } catch (e) {
+    scoreData.error = 'CFLL fetch error: ' + e.message;
+    console.error('[CFLL] Fetch error:', e.message);
+  }
+}
+
 // ========== HERO LIVE LINE PROVIDER ==========
 
 async function fetchHeroLiveLine() {
@@ -1135,19 +1563,21 @@ const server = http.createServer(async (req, res) => {
     } else if (parsedUrl.pathname === '/set-match') {
       const newUrl = parsedUrl.query.url;
       const provider = detectProvider(newUrl);
-      if (newUrl && (provider === 'cricbuzz' || provider === 'crex')) {
+      if (newUrl && (provider === 'cricbuzz' || provider === 'crex' || provider === 'cfll' || provider === 'hero')) {
         matchUrl = newUrl;
         console.log(`\n[MATCH CHANGED] Provider: ${provider} | New URL: ${matchUrl}`);
         // Fetch immediately with new URL
         try {
           if (provider === 'crex') { await fetchCrexScore(); }
+          else if (provider === 'cfll') { await fetchCfllScore(); }
+          else if (provider === 'hero') { await fetchHeroLiveLine(); }
           else { await fetchCricbuzzScore(); }
         } catch (e) { }
         res.writeHead(200);
         res.end(JSON.stringify({ success: true, provider: provider, matchUrl: matchUrl, message: 'Match URL updated! Score will refresh shortly.' }));
       } else {
         res.writeHead(400);
-        res.end(JSON.stringify({ error: 'Invalid URL. Must be a cricbuzz.com or crex.com URL.' }));
+        res.end(JSON.stringify({ error: 'Invalid URL. Must be a cricbuzz.com, crex.com, cricketfastliveline.in, or heroliveline.com URL.' }));
       }
 
       // Get current match URL
@@ -1282,6 +1712,8 @@ async function start() {
     const provider = detectProvider(matchUrl);
     if (provider === 'crex') {
       await fetchCrexScore();
+    } else if (provider === 'cfll') {
+      await fetchCfllScore();
     } else if (provider === 'hero') {
       await fetchHeroLiveLine();
     } else {

@@ -39,6 +39,8 @@ const DEMO_FALLBACK_AFTER = 3;
 let failCount = 0;
 let demoMode = false;
 let previousBallKey = null;
+let prevFlag1Id = null;
+let prevFlag2Id = null;
 
 // ===== DEMO DATA =====
 function getDemoData() {
@@ -157,12 +159,29 @@ function flagHtml(teamObj, teamName) {
     return getCountryFlag(teamName);
 }
 
-// Build player avatar HTML - use image URL if available, else emoji
+// Build player avatar HTML - use image URL if available, else initials avatar
 function avatarHtml(player, fallbackEmoji) {
     if (player && player.imageUrl) {
-        return `<img src="${player.imageUrl}" alt="${player.name || ''}" onerror="this.parentElement.innerHTML='${fallbackEmoji || '🧑'}'">`;
+        return `<img src="${player.imageUrl}" alt="${player.name || ''}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.innerHTML='${getInitialsAvatar(player.name)}'">`;
+    }
+    if (player && player.name && player.name !== '--' && player.name !== '-') {
+        return getInitialsAvatar(player.name);
     }
     return fallbackEmoji || '🧑';
+}
+
+// Generate SVG avatar with initials — consistent color per player name
+function getInitialsAvatar(name) {
+    if (!name || name === '--' || name === '-') return '🧑';
+    const parts = name.trim().split(/\s+/);
+    const initials = parts.length >= 2
+        ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+        : name.substring(0, 2).toUpperCase();
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    const hue = Math.abs(hash) % 360;
+    const bg = `hsl(${hue}, 55%, 35%)`;
+    return `<svg viewBox="0 0 60 60" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><circle cx="30" cy="30" r="30" fill="${bg}"/><text x="30" y="32" text-anchor="middle" dominant-baseline="central" fill="white" font-family="'Rajdhani',sans-serif" font-size="22" font-weight="700">${initials}</text></svg>`;
 }
 
 // Get strike rate class for styling
@@ -209,10 +228,17 @@ function ballClass(ball) {
     if (b === '6') return 'six';
     if (b === '4') return 'four';
     if (b === '0') return 'dot';
-    if (b === 'w' || b === 'W') return 'wicket';
-    if (b.includes('wd') || b === 'wd') return 'wide lb';
-    if (b.includes('lb') || b.includes('nb')) return 'lb';
-    if (b.includes('w') && b !== 'wd') return 'wide lb';
+    if (b === 'w') return 'wicket';
+    // CFLL: 1W, 2W = runs + wicket
+    if (/^\d+w$/i.test(b)) return 'wicket';
+    // CFLL: WB = wide ball, Wd = wide
+    if (b === 'wb' || b === 'wd' || b.includes('wd')) return 'wide lb';
+    // CFLL: NB = no ball
+    if (b.includes('nb')) return 'lb';
+    // CFLL: 1LB, 2LB = leg byes ; 1BYE = byes
+    if (b.includes('lb') || b.includes('bye')) return 'lb';
+    // Any other W variations
+    if (b.includes('w') && b !== 'wd' && b !== 'wb') return 'wide lb';
     return '';
 }
 
@@ -274,11 +300,19 @@ function render(data) {
         if (team2Name) team2Name.textContent = safe(team2.name);
         if (team2Short) team2Short.textContent = safe(team2.shortName);
 
-        // Flags
+        // Flags — only update if team changed to prevent blinking
         const flag1 = document.getElementById('flag1');
         const flag2 = document.getElementById('flag2');
-        if (flag1) flag1.innerHTML = flagHtml(team1, team1.name);
-        if (flag2) flag2.innerHTML = flagHtml(team2, team2.name);
+        const newFlag1Id = team1.id || team1.shortName;
+        const newFlag2Id = team2.id || team2.shortName;
+        if (flag1 && newFlag1Id !== prevFlag1Id) {
+            flag1.innerHTML = flagHtml(team1, team1.name);
+            prevFlag1Id = newFlag1Id;
+        }
+        if (flag2 && newFlag2Id !== prevFlag2Id) {
+            flag2.innerHTML = flagHtml(team2, team2.name);
+            prevFlag2Id = newFlag2Id;
+        }
 
         // Scores
         const innings = data.innings?.[0] || {};

@@ -1552,6 +1552,269 @@
                 text-shadow: 0 0 25px rgba(245, 200, 66, 0.8), 0 0 50px rgba(245, 200, 66, 0.3);
             }
         }
+
+        /* ===== BATSMAN & BOWLER SILHOUETTES ===== */
+        .bowler-silhouette {
+            position: absolute;
+            bottom: 55px;
+            left: 22%;
+            z-index: 5;
+            opacity: 0.85;
+            animation: bowlerIdle 2.5s ease-in-out infinite alternate;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+        }
+
+        .batsman-silhouette {
+            position: absolute;
+            bottom: 45px;
+            right: 28%;
+            z-index: 5;
+            opacity: 0.95;
+            animation: batsmanIdle 2s ease-in-out infinite alternate;
+            filter: drop-shadow(0 2px 8px rgba(245, 200, 66, 0.4));
+        }
+
+        @keyframes bowlerIdle {
+            0% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            100% {
+                transform: translateY(-3px) rotate(1deg);
+            }
+        }
+
+        @keyframes batsmanIdle {
+            0% {
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                transform: translateY(-2px) scale(1.02);
+            }
+        }
+
+        /* Ball delivery animation */
+        .bowl-arm {
+            transform-origin: 25px 24px;
+            animation: bowlArmSwing 3s ease-in-out infinite;
+        }
+
+        @keyframes bowlArmSwing {
+
+            0%,
+            70% {
+                transform: rotate(0deg);
+            }
+
+            80% {
+                transform: rotate(-30deg);
+            }
+
+            90% {
+                transform: rotate(15deg);
+            }
+
+            100% {
+                transform: rotate(0deg);
+            }
+        }
+
+        /* Cricket ball */
+        .cricket-ball-anim {
+            position: absolute;
+            bottom: 65px;
+            left: 28%;
+            z-index: 6;
+            opacity: 0;
+            transition: none;
+            filter: drop-shadow(0 0 4px rgba(204, 34, 34, 0.6));
+        }
+
+        .cricket-ball-anim.delivering {
+            animation: ballDelivery 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes ballDelivery {
+            0% {
+                left: 28%;
+                bottom: 65px;
+                opacity: 1;
+                transform: scale(0.6) rotate(0deg);
+            }
+
+            30% {
+                left: 38%;
+                bottom: 90px;
+                opacity: 1;
+                transform: scale(0.9) rotate(180deg);
+            }
+
+            60% {
+                left: 50%;
+                bottom: 70px;
+                opacity: 1;
+                transform: scale(1.1) rotate(360deg);
+            }
+
+            80% {
+                left: 58%;
+                bottom: 60px;
+                opacity: 1;
+                transform: scale(1) rotate(540deg);
+            }
+
+            100% {
+                left: 62%;
+                bottom: 55px;
+                opacity: 0.8;
+                transform: scale(0.8) rotate(720deg);
+            }
+        }
+
+        .cricket-ball-anim.delivering.wicket-ball {
+            animation: ballDeliveryWicket 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes ballDeliveryWicket {
+            0% {
+                left: 28%;
+                bottom: 65px;
+                opacity: 1;
+                transform: scale(0.6) rotate(0deg);
+            }
+
+            30% {
+                left: 38%;
+                bottom: 90px;
+                opacity: 1;
+                transform: scale(0.9) rotate(180deg);
+            }
+
+            60% {
+                left: 50%;
+                bottom: 70px;
+                opacity: 1;
+                transform: scale(1.2) rotate(360deg);
+            }
+
+            80% {
+                left: 55%;
+                bottom: 50px;
+                opacity: 1;
+                transform: scale(1.3) rotate(540deg);
+                filter: drop-shadow(0 0 12px rgba(255, 68, 68, 0.9));
+            }
+
+            100% {
+                left: 55%;
+                bottom: 35px;
+                opacity: 1;
+                transform: scale(1) rotate(720deg);
+                filter: drop-shadow(0 0 20px rgba(255, 68, 68, 1));
+            }
+        }
+
+        /* Delivery status bar */
+        .delivery-status {
+            position: absolute;
+            bottom: 36px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 8;
+            background: linear-gradient(90deg, rgba(0, 0, 0, 0.7), rgba(26, 58, 20, 0.8), rgba(0, 0, 0, 0.7));
+            padding: 3px 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            min-width: 80px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .delivery-status.visible {
+            opacity: 1;
+        }
+
+        .delivery-text {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .delivery-text.ball-state {
+            color: #ff8c00;
+        }
+
+        .delivery-text.result-state {
+            color: #00e676;
+            font-size: 12px;
+        }
+
+        .delivery-text.wicket-state {
+            color: #ff4444;
+            font-size: 12px;
+        }
+
+        /* Batsman batting swing on boundary */
+        .batsman-silhouette.swing {
+            animation: batsmanSwing 0.5s ease-out;
+        }
+
+        @keyframes batsmanSwing {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            30% {
+                transform: rotate(-15deg);
+            }
+
+            60% {
+                transform: rotate(10deg);
+            }
+
+            100% {
+                transform: rotate(0deg);
+            }
+        }
+
+        /* Stumps flying on wicket */
+        .stumps.wicket-anim .stump {
+            animation: stumpFly 0.6s ease-out forwards;
+        }
+
+        .stumps.wicket-anim .stump:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .stumps.wicket-anim .stump:nth-child(2) {
+            animation-delay: 0.05s;
+        }
+
+        .stumps.wicket-anim .stump:nth-child(3) {
+            animation-delay: 0.1s;
+        }
+
+        @keyframes stumpFly {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(25deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-8px) rotate(15deg);
+                opacity: 0.6;
+            }
+        }
     </style>
 </head>
 
@@ -1651,7 +1914,6 @@
                     <path
                         d="M0,70 L0,50 Q10,30 20,45 Q30,20 40,40 Q50,10 60,35 Q70,15 80,40 Q90,25 100,42 Q110,18 120,38 Q130,28 140,44 Q150,12 160,36 Q170,22 180,42 Q190,8 200,35 Q210,18 220,40 Q230,25 240,44 Q250,15 260,38 Q270,28 280,42 Q290,10 300,36 Q310,20 320,40 Q330,28 340,44 Q350,15 360,38 Q370,25 380,42 Q390,18 400,40 Q415,22 430,44 L430,70 Z" />
                 </svg>
-
             </div>
 
             <!-- Floodlights -->
@@ -1671,6 +1933,66 @@
                 <div class="stump"></div>
                 <div class="stump"></div>
                 <div class="stump"></div>
+            </div>
+
+            <!-- Bowler silhouette (left side, bowling action) -->
+            <div class="bowler-silhouette" id="bowlerSilhouette">
+                <svg viewBox="0 0 50 80" width="35" height="56">
+                    <!-- Body -->
+                    <circle cx="25" cy="10" r="7" fill="rgba(255,255,255,0.7)" />
+                    <line x1="25" y1="17" x2="25" y2="45" stroke="rgba(255,255,255,0.7)" stroke-width="2.5"
+                        stroke-linecap="round" />
+                    <!-- Left arm (bowling arm - raised) -->
+                    <line x1="25" y1="24" x2="12" y2="14" stroke="rgba(255,255,255,0.7)" stroke-width="2"
+                        stroke-linecap="round" class="bowl-arm" />
+                    <!-- Right arm -->
+                    <line x1="25" y1="24" x2="35" y2="35" stroke="rgba(255,255,255,0.7)" stroke-width="2"
+                        stroke-linecap="round" />
+                    <!-- Left leg (front) -->
+                    <line x1="25" y1="45" x2="18" y2="68" stroke="rgba(255,255,255,0.7)" stroke-width="2.5"
+                        stroke-linecap="round" />
+                    <!-- Right leg (back) -->
+                    <line x1="25" y1="45" x2="33" y2="66" stroke="rgba(255,255,255,0.7)" stroke-width="2.5"
+                        stroke-linecap="round" />
+                </svg>
+            </div>
+
+            <!-- Batsman silhouette (right side, batting stance) -->
+            <div class="batsman-silhouette" id="batsmanSilhouette">
+                <svg viewBox="0 0 60 80" width="40" height="64">
+                    <!-- Head -->
+                    <circle cx="30" cy="10" r="7" fill="#f5c842" />
+                    <!-- Helmet peak -->
+                    <rect x="23" y="5" width="14" height="3" rx="1" fill="#e0b030" />
+                    <!-- Body -->
+                    <line x1="30" y1="17" x2="30" y2="45" stroke="#f5c842" stroke-width="2.5" stroke-linecap="round" />
+                    <!-- Bat arm (right, holding bat up) -->
+                    <line x1="30" y1="25" x2="42" y2="18" stroke="#f5c842" stroke-width="2" stroke-linecap="round" />
+                    <!-- Bat -->
+                    <line x1="42" y1="18" x2="48" y2="6" stroke="#e0b030" stroke-width="3" stroke-linecap="round" />
+                    <!-- Left arm -->
+                    <line x1="30" y1="25" x2="38" y2="20" stroke="#f5c842" stroke-width="2" stroke-linecap="round" />
+                    <!-- Right leg (front, bent) -->
+                    <line x1="30" y1="45" x2="22" y2="65" stroke="#f5c842" stroke-width="2.5" stroke-linecap="round" />
+                    <line x1="22" y1="65" x2="18" y2="72" stroke="#f5c842" stroke-width="2" stroke-linecap="round" />
+                    <!-- Left leg (back) -->
+                    <line x1="30" y1="45" x2="38" y2="68" stroke="#f5c842" stroke-width="2.5" stroke-linecap="round" />
+                    <line x1="38" y1="68" x2="40" y2="72" stroke="#f5c842" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </div>
+
+            <!-- Animated cricket ball -->
+            <div class="cricket-ball-anim" id="cricketBallAnim">
+                <svg viewBox="0 0 16 16" width="14" height="14">
+                    <circle cx="8" cy="8" r="7" fill="#cc2222" />
+                    <path d="M4,4 Q8,8 4,12" fill="none" stroke="#fff" stroke-width="0.8" />
+                    <path d="M12,4 Q8,8 12,12" fill="none" stroke="#fff" stroke-width="0.8" />
+                </svg>
+            </div>
+
+            <!-- Delivery status bar -->
+            <div class="delivery-status" id="deliveryStatus">
+                <span class="delivery-text" id="deliveryText"></span>
             </div>
 
             <!-- Floating particles -->
@@ -1782,6 +2104,8 @@
         let failCount = 0;
         let demoMode = false;
         let previousBallKey = null;  // Track to detect new deliveries for animation
+        let prevBatTeamId = null;     // Cache to prevent flag blinking
+        let prevFieldTeamId = null;
 
         // -------- Demo / fallback data --------
         function getDemoData() {
@@ -1882,12 +2206,33 @@
             return getCountryFlag(teamName);
         }
 
-        /** Build player avatar HTML — use image URL if available, else emoji */
+        /** Build player avatar HTML — use image URL if available, else generate initials avatar */
         function avatarHtml(player, fallbackEmoji) {
             if (player && player.imageUrl) {
-                return `<img src="${player.imageUrl}" alt="${player.name || ''}" onerror="this.parentElement.innerHTML='${fallbackEmoji || '🧑'}'">`;
+                return `<img src="${player.imageUrl}" alt="${player.name || ''}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.innerHTML='${getInitialsAvatar(player.name)}'">`;
+            }
+            if (player && player.name && player.name !== '--' && player.name !== '-') {
+                return getInitialsAvatar(player.name);
             }
             return fallbackEmoji || '🧑';
+        }
+
+        /** Generate SVG avatar with initials — consistent color per player name */
+        function getInitialsAvatar(name) {
+            if (!name || name === '--' || name === '-') return '🧑';
+            const parts = name.trim().split(/\s+/);
+            const initials = parts.length >= 2
+                ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+                : name.substring(0, 2).toUpperCase();
+            // Hash name to get consistent color
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            const hue = Math.abs(hash) % 360;
+            const bg = `hsl(${hue}, 55%, 35%)`;
+            return `<svg viewBox="0 0 60 60" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="30" cy="30" r="30" fill="${bg}"/>
+                <text x="30" y="32" text-anchor="middle" dominant-baseline="central" fill="white" font-family="'Rajdhani',sans-serif" font-size="22" font-weight="700">${initials}</text>
+            </svg>`;
         }
 
         function getSRClass(sr) {
@@ -1935,10 +2280,17 @@
             if (b === '6') return 'six';
             if (b === '4') return 'four';
             if (b === '0') return 'dot';
-            if (b === 'w' || b === 'W') return 'wicket';
-            if (b.includes('wd') || b === 'wd') return 'wide lb';
-            if (b.includes('lb') || b.includes('nb')) return 'lb';
-            if (b.includes('w') && b !== 'wd') return 'wide lb';
+            if (b === 'w') return 'wicket';
+            // CFLL: 1W, 2W = runs + wicket
+            if (/^\d+w$/i.test(b)) return 'wicket';
+            // CFLL: WB = wide ball, Wd = wide
+            if (b === 'wb' || b === 'wd' || b.includes('wd')) return 'wide lb';
+            // CFLL: NB = no ball
+            if (b.includes('nb')) return 'lb';
+            // CFLL: 1LB, 2LB = leg byes ; 1BYE = byes
+            if (b.includes('lb') || b.includes('bye')) return 'lb';
+            // Any other W variations
+            if (b.includes('w') && b !== 'wd' && b !== 'wb') return 'wide lb';
             return '';
         }
 
@@ -2039,19 +2391,17 @@
             rightBlock.querySelector('.team-overs-small').textContent =
                 prevInn ? (fieldWktsLabel || `(${safe(fieldOvers, 0)} Overs)`) : '';
 
-            // Flags — use CREX image URLs if available
-            const flagPair = document.querySelector('.flag-pair');
-            flagPair.innerHTML = `
-                <div class="flag-img">${flagHtml(batTeamObj, batTeam)}</div>
-                <div class="vs-text">VS</div>
-                <div class="flag-img">${flagHtml(fieldTeamObj, fieldTeam)}</div>`;
-
-            // Show last ball on pitch area (above the over display)
-            try {
-                // Last ball display is now handled in the section after thisOver is populated
-                // See section around line 2075 for the actual last ball display logic
-            } catch (e) {
-                console.log('Last ball error:', e);
+            // Flags — only update if teams changed (prevents blinking)
+            const newBatId = batTeamObj.id || batShort;
+            const newFieldId = fieldTeamObj.id || fieldShort;
+            if (newBatId !== prevBatTeamId || newFieldId !== prevFieldTeamId) {
+                const flagPair = document.querySelector('.flag-pair');
+                flagPair.innerHTML = `
+                    <div class="flag-img">${flagHtml(batTeamObj, batTeam)}</div>
+                    <div class="vs-text">VS</div>
+                    <div class="flag-img">${flagHtml(fieldTeamObj, fieldTeam)}</div>`;
+                prevBatTeamId = newBatId;
+                prevFieldTeamId = newFieldId;
             }
 
             // Win probability — derive from requiredRunRate vs currentRunRate or remRunsToWin
@@ -2259,8 +2609,66 @@
                     }
 
                     // Add pop animation only when ball changes
-                    const popClass = (ballKey !== previousBallKey) ? ' pop' : '';
+                    const isNewBall = (ballKey !== previousBallKey);
+                    const popClass = isNewBall ? ' pop' : '';
                     previousBallKey = ballKey;
+
+                    // ===== TRIGGER STADIUM ANIMATIONS ON NEW BALL =====
+                    if (isNewBall) {
+                        const ballEl = document.getElementById('cricketBallAnim');
+                        const statusEl = document.getElementById('deliveryStatus');
+                        const statusText = document.getElementById('deliveryText');
+                        const batsmanEl = document.getElementById('batsmanSilhouette');
+                        const stumpsEl = document.querySelector('.stumps');
+
+                        if (ballEl && statusEl && statusText) {
+                            // Reset ball
+                            ballEl.classList.remove('delivering', 'wicket-ball');
+                            void ballEl.offsetWidth; // force reflow
+
+                            // Phase 1: Show 'BALL' status + start delivery
+                            statusEl.classList.add('visible');
+                            statusText.className = 'delivery-text ball-state';
+                            statusText.textContent = 'BALL';
+                            ballEl.classList.add('delivering');
+                            if (b === 'w' || /^\d+w$/i.test(b)) {
+                                ballEl.classList.add('wicket-ball');
+                            }
+
+                            // Phase 2: Show result after animation completes
+                            setTimeout(() => {
+                                if (b === 'w' || /^\d+w$/i.test(b)) {
+                                    statusText.className = 'delivery-text wicket-state';
+                                    statusText.textContent = 'WICKET!';
+                                    // Stumps fly
+                                    if (stumpsEl) {
+                                        stumpsEl.classList.add('wicket-anim');
+                                        setTimeout(() => stumpsEl.classList.remove('wicket-anim'), 1200);
+                                    }
+                                } else if (b === '6') {
+                                    statusText.className = 'delivery-text result-state';
+                                    statusText.textContent = 'SIX! 🔥';
+                                    if (batsmanEl) { batsmanEl.classList.add('swing'); setTimeout(() => batsmanEl.classList.remove('swing'), 600); }
+                                } else if (b === '4') {
+                                    statusText.className = 'delivery-text result-state';
+                                    statusText.textContent = 'FOUR!';
+                                    if (batsmanEl) { batsmanEl.classList.add('swing'); setTimeout(() => batsmanEl.classList.remove('swing'), 600); }
+                                } else if (b === '0') {
+                                    statusText.className = 'delivery-text';
+                                    statusText.textContent = 'DOT BALL';
+                                } else {
+                                    statusText.className = 'delivery-text result-state';
+                                    statusText.textContent = displayValue + (parseInt(b) > 0 ? ' RUN' + (parseInt(b) > 1 ? 'S' : '') : '');
+                                }
+                            }, 850);
+
+                            // Phase 3: Hide status
+                            setTimeout(() => {
+                                statusEl.classList.remove('visible');
+                                ballEl.classList.remove('delivering', 'wicket-ball');
+                            }, 2500);
+                        }
+                    }
 
                     lastBallCenter.innerHTML = `
                         <div class="last-ball-number ${colorClass}${popClass}">${displayValue}</div>
