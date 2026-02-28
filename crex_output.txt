@@ -1,0 +1,250 @@
+﻿Fetching: https://crex.com/scoreboard/YA5/1UY/49th-T20I-Super-8-Group-2nd-Match/R/S/eng-vs-nz-49th-t20i-super-8-group-2nd-match-t20-world-cup-2026/live
+HTML length: 349636
+
+Top-level keys: 6
+  KEY: https://crickapi.com/live/getMatchMetaData
+  KEY: https://api-v1.com/w/sV3.php
+  KEY: https://oc.crickapi.com/mapping/getHomeMapDataliveparsing
+  KEY: https://content.crickapi.com/commentary/getBallFeeds
+  KEY: https://oc.crickapi.com/mapping/getHomeMapDataoddview
+  KEY: firebaseData
+
+=== LIVE DATA KEYS ===
+  A (string)
+  B (string)
+  D (string)
+  F (string)
+  L (string)
+  M (string)
+  R (string)
+  S (string)
+  Z (string)
+  a (string)
+  ats (string)
+  b (string)
+  c (string)
+  ca (number)
+  cb (string)
+  d (string)
+  ed (number)
+  f (number)
+  fo (string)
+  g (string)
+  gen (number)
+  h (string)
+  i (string)
+  j (string)
+  k (string)
+  l (string)
+  la (number)
+  m (string)
+  mn (string)
+  ms (number)
+  mt (string)
+  n (string)
+  n1 (number)
+  o (string)
+  oh (number)
+  p (string)
+  pr (object)
+  q (string)
+  r (string)
+  rb (array[4])
+  rf (number)
+  s (string)
+  sd (number)
+  sf (string)
+  st (string)
+  t (string)
+  tti (number)
+  wp (string)
+  x (string)
+  y (string)
+  z (string)
+  inning (number)
+  status (number)
+  target (number)
+  secondInning (boolean)
+  partnerruns (number)
+  partnerballs (number)
+  score1 (string)
+  over1 (string)
+  score2 (string)
+  over2 (string)
+  team1flag (string)
+  team2flag (string)
+  t1Jerimage (string)
+  team1Gradient (string)
+  t2Jerimage (string)
+  team2Gradient (string)
+  team1 (string)
+  team1_f_n (string)
+  team1short (string)
+  team2 (string)
+  team2_f_n (string)
+  team2short (string)
+  comment1 (string)
+  rrr (string)
+  crr (string)
+  crrObj (array[4])
+  projectedOvers (array[4])
+  projectedScoreObj (object)
+  hideprojected (boolean)
+  keyArr (array[4])
+  valueArr (array[4])
+  crrArr (array[4])
+  session_table1 (array[4])
+  hideSessionTable (boolean)
+  ot1 (number)
+  ot2 (number)
+  b1image (string)
+  b2image (string)
+  p1f (string)
+  pname1 (string)
+  pnameHead1 (string)
+  player_full_name1 (string)
+  p2f (string)
+  pname2 (string)
+  pnameHead2 (string)
+  player_full_name2 (string)
+  os1 (number)
+  os2 (number)
+  run1 (string)
+  ball1 (string)
+  run2 (string)
+  ball2 (string)
+  four1 (string)
+  six1 (string)
+  four2 (string)
+  six2 (string)
+  sr1 (string)
+  sr2 (string)
+  isImpact1 (boolean)
+  isImpact2 (boolean)
+  b3image (string)
+  bname (string)
+  bnameHead (string)
+  bowler_full_name (string)
+  isImpact3 (boolean)
+  bwr (string)
+  bover (string)
+  beco (string)
+  lastovers (array[2])
+  lwfkey (string)
+  lwrun1 (string)
+  lwball1 (string)
+  lwname1 (string)
+  lwSlug (string)
+  lbwicket (string)
+  lbover (string)
+  lbname (string)
+  tableHead (array[4])
+  firstHalf (boolean)
+  secondHalf (boolean)
+  rate (string)
+  rate2 (number)
+  rT (string)
+  rT2 (string)
+  rD (string)
+  rD2 (string)
+  rt (string)
+  rtShort (string)
+  rtcc (string)
+  rtKey (string)
+  s_o (number)
+  s_mi (number)
+  s_mx (number)
+  session (number)
+  session2 (number)
+  lambi (string)
+  lambi2 (string)
+  session_overs (number)
+  lambi_overs (string)
+
+=== BALL/LAST/EVENT/RUN FIELDS ===
+  partnerruns: 1
+  partnerballs: 1
+  over1: 1.3
+  over2: 20.0
+  rrr: 8.49
+  crr: 2.00
+  crrObj: [2,1.5,2.25,2.5]
+  projectedOvers: [5,10,15,20]
+  crrArr: ["2.00*","1.50","2.25","2.50"]
+  run1: 0
+  ball1: (2)
+  run2: 1
+  ball2: (1)
+  bover: 0.3
+  lastovers: [{"over":"Over 1","overinfo":["0","2","0","W","0","0"],"len":[],"total":2},{"over":"Over 2","overinfo":["0","W","1"],"len":["","",""],"total":1}]
+  lwrun1: 0
+  lwball1: (2)
+  lbwicket: 1-2
+  lbover: (1.0)
+  lbname: Matt Henry
+  session_overs: 6
+  lambi_overs: --
+
+=== LASTOVERS (last 2) ===
+[
+  {
+    "over": "Over 1",
+    "overinfo": [
+      "0",
+      "2",
+      "0",
+      "W",
+      "0",
+      "0"
+    ],
+    "len": [],
+    "total": 2
+  },
+  {
+    "over": "Over 2",
+    "overinfo": [
+      "0",
+      "W",
+      "1"
+    ],
+    "len": [
+      "",
+      "",
+      ""
+    ],
+    "total": 1
+  }
+]
+
+=== LOOKING FOR LAST BALL VALUE ===
+
+=== LAST OVER from rb ===
+{
+  "b": [
+    {
+      "bf": "DC",
+      "d": 1,
+      "t": 0,
+      "u": "0"
+    },
+    {
+      "bf": "DC",
+      "d": 2,
+      "t": 1,
+      "u": "w"
+    },
+    {
+      "bf": "DC",
+      "d": 3,
+      "t": 0,
+      "u": "1"
+    }
+  ],
+  "bt": "S",
+  "i": 1,
+  "o": 2,
+  "r": 1,
+  "ts": "3/2"
+}
+
+Full live data saved to crex_live_data.json

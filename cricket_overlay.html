@@ -1,0 +1,2310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cricket Live Score</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;600;700;800;900&family=Exo+2:wght@300;400;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gold: #f5c842;
+            --gold2: #ffd700;
+            --green: #00e676;
+            --dark: #040d1a;
+            --blue1: #0a1628;
+            --blue2: #0d2040;
+            --blue3: #122a54;
+            --accent: #1e90ff;
+            --accent2: #00bfff;
+            --red: #ff4444;
+            --pak-green: #01411C;
+        }
+
+        body {
+            background: radial-gradient(ellipse at center, #0a1628 0%, #020810 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Exo 2', sans-serif;
+            padding: 15px;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* ===== MAIN CARD ===== */
+        .card {
+            width: 100vw;
+            height: 100vh;
+            border-radius: 0;
+            overflow: hidden;
+            position: relative;
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.07),
+                0 0 40px rgba(30, 144, 255, 0.2),
+                0 40px 80px rgba(0, 0, 0, 0.9);
+            animation: cardReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        @keyframes cardReveal {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Animated border glow */
+        .card::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 22px;
+            background: conic-gradient(from 0deg, #1e90ff, #00e676, #f5c842, #ff4444, #1e90ff);
+            z-index: -1;
+            animation: borderSpin 4s linear infinite;
+        }
+
+        @keyframes borderSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ===== SCORE HEADER ===== */
+        .score-header {
+            background: linear-gradient(180deg, #0e1e3a 0%, #081428 100%);
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .score-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 300%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            animation: scanLine 3s ease-in-out infinite;
+        }
+
+        @keyframes scanLine {
+            0% {
+                left: -100%;
+            }
+
+            100% {
+                left: 100%;
+            }
+        }
+
+        .live-badge-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            background: linear-gradient(90deg, transparent, rgba(30, 144, 255, 0.1), transparent);
+            border-bottom: 1px solid rgba(245, 200, 66, 0.3);
+            gap: 12px;
+        }
+
+        .toss-status {
+            text-align: center;
+            padding: 8px 20px;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, rgba(255, 107, 0, 0.15) 0%, rgba(255, 140, 0, 0.25) 50%, rgba(255, 107, 0, 0.15) 100%);
+            border-left: 3px solid #ff6b00;
+            border-right: 3px solid #ff6b00;
+            border-radius: 4px;
+        }
+
+        .toss-text {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 22px;
+            font-weight: 600;
+            color: #ff8c00;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #ff4444;
+            border-radius: 50%;
+            animation: livePulse 1s ease-in-out infinite;
+            box-shadow: 0 0 8px #ff4444;
+        }
+
+        @keyframes livePulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(0.7);
+            }
+        }
+
+        .score-title-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 5px;
+            text-shadow: 0 0 20px rgba(30, 144, 255, 0.6);
+        }
+
+        .t20-badge {
+            background: linear-gradient(135deg, var(--gold), #e0a800);
+            color: #000;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* Teams */
+        .teams-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px 10px;
+            position: relative;
+        }
+
+        .team-block {
+            flex: 1;
+        }
+
+        .team-name {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .team-score-main {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.1;
+            text-shadow: 0 0 20px rgba(30, 144, 255, 0.5);
+            animation: scoreCount 1s ease-out both;
+            animation-delay: 0.5s;
+        }
+
+        @keyframes scoreCount {
+            from {
+                opacity: 0;
+                transform: scale(1.2);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .team-overs-small {
+            font-family: 'Exo 2', sans-serif;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.45);
+            margin-top: 2px;
+        }
+
+        .team-block.right {
+            text-align: right;
+        }
+
+        .team-block.right .team-score-main {
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        /* Flags + VS */
+        .flags-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+            padding: 0 10px;
+        }
+
+        .flag-pair {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .last-ball-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+        }
+
+        /* Live Ball by Ball - center section */
+        .live-balls-center {
+            background: linear-gradient(90deg, rgba(10, 22, 40, 0.9) 0%, rgba(13, 34, 64, 0.9) 50%, rgba(10, 22, 40, 0.9) 100%);
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(30, 144, 255, 0.25);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            max-width: 100%;
+        }
+
+        .live-balls-row {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+        }
+
+        .live-over {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 3px 5px;
+            border-radius: 3px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .live-over-num {
+            color: #f5c842;
+            font-weight: 700;
+            min-width: 40px;
+        }
+
+        .live-ball {
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2px;
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .live-ball.dot {
+            background: #333;
+            color: #777;
+        }
+
+        .live-ball.one {
+            background: #1a237e;
+            color: #64b5f6;
+        }
+
+        .live-ball.two {
+            background: #1a237e;
+            color: #90caf9;
+        }
+
+        .live-ball.three {
+            background: #1a237e;
+            color: #42a5f5;
+        }
+
+        .live-ball.four {
+            background: #1b5e20;
+            color: #66bb6a;
+            font-size: 10px;
+        }
+
+        .live-ball.six {
+            background: #b71c1c;
+            color: #ef5350;
+            font-size: 10px;
+        }
+
+        .live-ball.wicket {
+            background: #e65100;
+            color: #fff;
+            font-size: 9px;
+        }
+
+        .live-ball.wd {
+            background: #4a148c;
+            color: #ba68c8;
+            font-size: 8px;
+        }
+
+        .live-ball.nb {
+            background: #ff6f00;
+            color: #ffe082;
+            font-size: 8px;
+        }
+
+        .live-over-total {
+            color: #00e676;
+            font-weight: 700;
+            margin-left: 3px;
+            min-width: 20px;
+        }
+
+        .vs-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+            text-shadow: 0 0 10px rgba(30, 144, 255, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .flag-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .flag-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .vs-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 9px;
+            color: var(--gold);
+            letter-spacing: 1px;
+        }
+
+        /* CREX-style last ball - permanent golden number between scores */
+        .last-ball-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 50px;
+        }
+
+        .last-ball-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            color: #f5c842;
+            text-shadow: 0 0 20px rgba(245, 200, 66, 0.6), 0 0 40px rgba(245, 200, 66, 0.2);
+            line-height: 1;
+            transition: all 0.3s ease;
+        }
+
+        .last-ball-number.wicket {
+            color: #ff4444;
+            text-shadow: 0 0 20px rgba(255, 68, 68, 0.6), 0 0 40px rgba(255, 68, 68, 0.2);
+        }
+
+        .last-ball-number.six {
+            color: #00e676;
+            text-shadow: 0 0 20px rgba(0, 230, 118, 0.6), 0 0 40px rgba(0, 230, 118, 0.2);
+        }
+
+        .last-ball-number.four {
+            color: #1e90ff;
+            text-shadow: 0 0 20px rgba(30, 144, 255, 0.6), 0 0 40px rgba(30, 144, 255, 0.2);
+        }
+
+        .last-ball-number.dot {
+            color: rgba(255, 255, 255, 0.5);
+            text-shadow: none;
+            font-size: 32px;
+        }
+
+        .last-ball-number.dot.pop {
+            animation: lastBallPulse 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        .last-ball-number.wide {
+            color: #ff8c00;
+            text-shadow: 0 0 20px rgba(255, 140, 0, 0.6);
+            font-size: 28px;
+        }
+
+        .last-ball-desc {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: rgba(245, 200, 66, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 2px;
+        }
+
+        @keyframes lastBallPulse {
+            0% {
+                transform: scale(1.3);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .last-ball-number.pop {
+            animation: lastBallPulse 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        /* Cricket-style animations for special deliveries */
+        @keyframes wicketShake {
+
+            0%,
+            100% {
+                transform: translateX(0) rotate(0deg);
+            }
+
+            10% {
+                transform: translateX(-5px) rotate(-5deg);
+            }
+
+            20% {
+                transform: translateX(5px) rotate(5deg);
+            }
+
+            30% {
+                transform: translateX(-4px) rotate(-4deg);
+            }
+
+            40% {
+                transform: translateX(4px) rotate(4deg);
+            }
+
+            50% {
+                transform: translateX(-3px) rotate(-3deg);
+            }
+
+            60% {
+                transform: translateX(3px) rotate(3deg);
+            }
+
+            70% {
+                transform: translateX(-2px) rotate(-2deg);
+            }
+
+            80% {
+                transform: translateX(2px) rotate(2deg);
+            }
+
+            90% {
+                transform: translateX(-1px) rotate(-1deg);
+            }
+        }
+
+        @keyframes sixerBounce {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+                text-shadow: 0 0 0 transparent;
+            }
+
+            25% {
+                transform: scale(1.6) rotate(90deg);
+                opacity: 1;
+                text-shadow: 0 0 40px #00e676, 0 0 80px #00e676, 0 0 120px #00e676;
+            }
+
+            50% {
+                transform: scale(1.3) rotate(180deg);
+                text-shadow: 0 0 50px #00e676, 0 0 100px #00e676, 0 0 150px #00e676;
+            }
+
+            75% {
+                transform: scale(1.4) rotate(270deg);
+                text-shadow: 0 0 45px #00e676, 0 0 90px #00e676, 0 0 135px #00e676;
+            }
+
+            100% {
+                transform: scale(1) rotate(360deg);
+                opacity: 1;
+                text-shadow: 0 0 40px #00e676, 0 0 80px #00e676, 0 0 120px #00e676;
+            }
+        }
+
+        @keyframes fourSlant {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 0;
+                text-shadow: 0 0 0 transparent;
+            }
+
+            25% {
+                transform: scale(1.6) rotate(-90deg);
+                opacity: 1;
+                text-shadow: 0 0 40px #1e90ff, 0 0 80px #1e90ff, 0 0 120px #1e90ff;
+            }
+
+            50% {
+                transform: scale(1.3) rotate(-180deg);
+                text-shadow: 0 0 50px #1e90ff, 0 0 100px #1e90ff, 0 0 150px #1e90ff;
+            }
+
+            75% {
+                transform: scale(1.4) rotate(-270deg);
+                text-shadow: 0 0 45px #1e90ff, 0 0 90px #1e90ff, 0 0 135px #1e90ff;
+            }
+
+            100% {
+                transform: scale(1) rotate(-360deg);
+                opacity: 1;
+                text-shadow: 0 0 40px #1e90ff, 0 0 80px #1e90ff, 0 0 120px #1e90ff;
+            }
+        }
+
+        @keyframes wideSway {
+            0% {
+                transform: translateX(-10px);
+                opacity: 0;
+            }
+
+            50% {
+                transform: translateX(10px);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .last-ball-number.wicket.pop {
+            animation: wicketShake 0.5s ease-in-out, lastBallPulse 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            color: #ff4444;
+            text-shadow: 0 0 30px rgba(255, 68, 68, 0.8), 0 0 60px rgba(255, 68, 68, 0.4);
+        }
+
+        .last-ball-number.six.pop {
+            animation: sixerBounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            color: #00e676;
+            text-shadow: 0 0 30px rgba(0, 230, 118, 0.8), 0 0 60px rgba(0, 230, 118, 0.4);
+        }
+
+        .last-ball-number.four.pop {
+            animation: fourSlant 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            color: #1e90ff;
+            text-shadow: 0 0 30px rgba(30, 144, 255, 0.8), 0 0 60px rgba(30, 144, 255, 0.4);
+        }
+
+        .last-ball-number.wide.pop {
+            animation: wideSway 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            color: #ff8c00;
+            text-shadow: 0 0 30px rgba(255, 140, 0, 0.8), 0 0 60px rgba(255, 140, 0, 0.4);
+        }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex;
+            gap: 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .stat-chip {
+            flex: 1;
+            text-align: center;
+            padding: 7px 4px;
+            border-right: 1px solid rgba(255, 255, 255, 0.06);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-chip:last-child {
+            border-right: none;
+        }
+
+        .stat-chip::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
+        }
+
+        .stat-label {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            margin-top: 1px;
+        }
+
+        .stat-value.highlight {
+            color: var(--gold);
+        }
+
+        /* Win probability bar */
+        .winprob-bar {
+            padding: 8px 14px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .winprob-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .winprob-team {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .winprob-team.pak {
+            color: var(--gold);
+        }
+
+        .winprob-team.nz {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .winprob-track {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .winprob-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, var(--gold), #ff8c00);
+            border-radius: 10px;
+            animation: fillBar 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+            animation-delay: 0.8s;
+            box-shadow: 0 0 10px rgba(245, 200, 66, 0.6);
+        }
+
+        @keyframes fillBar {
+            from {
+                width: 0%;
+            }
+
+            to {
+                width: 100%;
+            }
+        }
+
+        /* Last Wkt */
+        .last-wkt {
+            background: linear-gradient(90deg, rgba(255, 68, 68, 0.08), rgba(255, 68, 68, 0.02));
+            border-top: 1px solid rgba(255, 68, 68, 0.2);
+            padding: 6px 14px;
+            font-size: 10.5px;
+            color: rgba(255, 255, 255, 0.6);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .last-wkt-scroll {
+            animation: marquee 12s linear infinite;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(100%);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .last-wkt strong {
+            color: var(--red);
+            font-family: 'Rajdhani', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        /* ===== STADIUM SECTION ===== */
+        .stadium-section {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+            background: linear-gradient(180deg, #060f1e 0%, #0a1a35 50%, #0d2040 100%);
+        }
+
+        /* Stars */
+        .stars {
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(1px 1px at 10% 20%, rgba(255, 255, 255, 0.6) 0%, transparent 100%),
+                radial-gradient(1px 1px at 30% 10%, rgba(255, 255, 255, 0.4) 0%, transparent 100%),
+                radial-gradient(1px 1px at 70% 15%, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
+                radial-gradient(1px 1px at 85% 25%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
+                radial-gradient(1px 1px at 50% 5%, rgba(255, 255, 255, 0.7) 0%, transparent 100%),
+                radial-gradient(1px 1px at 20% 40%, rgba(255, 255, 255, 0.3) 0%, transparent 100%),
+                radial-gradient(1px 1px at 90% 50%, rgba(255, 255, 255, 0.4) 0%, transparent 100%);
+            animation: twinkle 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% {
+                opacity: 0.6;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        /* Crowd silhouette */
+        .crowd {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            overflow: hidden;
+        }
+
+        .crowd-svg {
+            width: 100%;
+            height: 100%;
+            fill: #0c1e3a;
+        }
+
+
+
+
+        /* Floodlight towers */
+        .fl-tower {
+            position: absolute;
+            bottom: 60px;
+            width: 4px;
+            background: linear-gradient(180deg, #334, #1a2540);
+            border-radius: 2px;
+        }
+
+        .fl-tower.left {
+            left: 30px;
+            height: 110px;
+        }
+
+        .fl-tower.right {
+            right: 30px;
+            height: 110px;
+        }
+
+        .fl-head {
+            position: absolute;
+            top: 0;
+            width: 30px;
+            height: 8px;
+            background: #445;
+            border-radius: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .fl-beam {
+            position: absolute;
+            top: 8px;
+            width: 0;
+            height: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .fl-beam.left-beam {
+            border-left: 80px solid transparent;
+            border-right: 0px solid transparent;
+            border-top: 160px solid rgba(255, 220, 100, 0.06);
+            animation: beamFlicker 2s ease-in-out infinite;
+        }
+
+        .fl-beam.right-beam {
+            border-right: 80px solid transparent;
+            border-left: 0px solid transparent;
+            border-top: 160px solid rgba(255, 220, 100, 0.06);
+            animation: beamFlicker 2s ease-in-out infinite 0.5s;
+        }
+
+        @keyframes beamFlicker {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        /* Ground / Pitch */
+        .ground-ellipse {
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 320px;
+            height: 90px;
+            background: radial-gradient(ellipse, #3a7030 0%, #2a5a22 50%, #1a3a14 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 40px rgba(46, 140, 50, 0.3), inset 0 -10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .pitch-strip {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 60px;
+            background: linear-gradient(180deg, #c8a84a, #a08030);
+            border-radius: 4px;
+            opacity: 0.7;
+        }
+
+        /* Stumps */
+        .stumps {
+            position: absolute;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 3px;
+        }
+
+        .stump {
+            width: 2px;
+            height: 14px;
+            background: #ddd;
+            border-radius: 1px;
+        }
+
+        /* Floating particles */
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: floatParticle linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes floatParticle {
+            0% {
+                opacity: 0;
+                transform: translateY(0) scale(0);
+            }
+
+            10% {
+                opacity: 0.8;
+            }
+
+            90% {
+                opacity: 0.3;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-200px) scale(1.5);
+            }
+        }
+
+        /* ===== PLAYER SECTION ===== */
+        .players-section {
+            background: linear-gradient(180deg, #050e1c, #080f1e);
+            padding: 12px 10px 8px;
+            position: relative;
+        }
+
+        .players-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 10%;
+            right: 10%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        .section-label {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 9px;
+            color: var(--accent2);
+            letter-spacing: 3px;
+            text-align: center;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .batters-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        /* Player cards */
+        .player-card {
+            flex: 1;
+            background: linear-gradient(135deg, rgba(20, 36, 68, 0.95) 0%, rgba(8, 16, 32, 0.98) 100%);
+            border: 1px solid rgba(30, 144, 255, 0.15);
+            border-radius: 12px;
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: slideInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .player-card:nth-child(1) {
+            animation-delay: 0.3s;
+        }
+
+        .player-card:nth-child(2) {
+            animation-delay: 0.45s;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .player-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(30, 144, 255, 0.2);
+            border-color: rgba(30, 144, 255, 0.4);
+        }
+
+        .player-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            opacity: 0.6;
+        }
+
+        /* Avatar circle */
+        .avatar-wrap {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a3a28, #0f2418);
+            border: 2px solid var(--pak-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 6px;
+            position: relative;
+            box-shadow: 0 0 12px rgba(1, 65, 28, 0.6);
+            animation: avatarGlow 2s ease-in-out infinite alternate;
+            overflow: hidden;
+        }
+
+        .avatar-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        @keyframes avatarGlow {
+            from {
+                box-shadow: 0 0 8px rgba(0, 230, 118, 0.3);
+            }
+
+            to {
+                box-shadow: 0 0 18px rgba(0, 230, 118, 0.6);
+            }
+        }
+
+        .avatar-wrap .batting-ind {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 16px;
+            height: 16px;
+            background: var(--gold);
+            border-radius: 50%;
+            border: 2px solid #000;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: indPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes indPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.3);
+            }
+        }
+
+        .player-name {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.65);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .player-score-row {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 3px;
+        }
+
+        .p-score {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+        }
+
+        .bat-emoji {
+            font-size: 13px;
+        }
+
+        .p-stats {
+            font-family: 'Exo 2', sans-serif;
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 0.5px;
+        }
+
+        .p-stats span {
+            color: var(--gold);
+        }
+
+        /* SR bar */
+        .sr-bar-track {
+            height: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .sr-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            animation: srFill 1.5s ease-out both;
+            animation-delay: 1s;
+        }
+
+        @keyframes srFill {
+            from {
+                width: 0%;
+            }
+        }
+
+        .sr-bar-fill.low {
+            background: linear-gradient(90deg, #ff4444, #ff8800);
+            width: 55%;
+        }
+
+        .sr-bar-fill.mid {
+            background: linear-gradient(90deg, #ff8800, #f5c842);
+            width: 75%;
+        }
+
+        .sr-bar-fill.high {
+            background: linear-gradient(90deg, #00e676, #1e90ff);
+            width: 100%;
+        }
+
+        /* Bowler card */
+        .bowler-card {
+            background: linear-gradient(135deg, rgba(25, 10, 10, 0.95), rgba(12, 5, 5, 0.98));
+            border: 1px solid rgba(255, 68, 68, 0.2);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            max-width: 280px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            animation: slideInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+            animation-delay: 0.6s;
+        }
+
+        .bowler-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--red), #ff8c00);
+            opacity: 0.7;
+        }
+
+        .bowler-avatar {
+            width: 68px;
+            height: 68px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3a1010, #1a0505);
+            border: 2px solid rgba(255, 68, 68, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            flex-shrink: 0;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.3);
+            animation: bowlerGlow 2s ease-in-out infinite alternate;
+            overflow: hidden;
+        }
+
+        .bowler-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        @keyframes bowlerGlow {
+            from {
+                box-shadow: 0 0 10px rgba(255, 68, 68, 0.2);
+            }
+
+            to {
+                box-shadow: 0 0 22px rgba(255, 68, 68, 0.5);
+            }
+        }
+
+        .cricket-ball {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #e55, #900);
+            position: relative;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 6px;
+            box-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+            animation: ballSpin 2s linear infinite;
+        }
+
+        @keyframes ballSpin {
+            0% {
+                box-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+            }
+
+            50% {
+                box-shadow: 0 0 16px rgba(255, 68, 68, 0.9);
+            }
+
+            100% {
+                box-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+            }
+        }
+
+        .cricket-ball::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 3px;
+            right: 3px;
+            height: 1px;
+            background: rgba(255, 200, 200, 0.4);
+            border-radius: 50%;
+            box-shadow: 0 6px 0 rgba(255, 200, 200, 0.3);
+        }
+
+        /* ===== OVER ANALYSIS ===== */
+        .over-analysis {
+            background: linear-gradient(180deg, #0d1800, #111e00);
+            border-top: 1px solid rgba(245, 200, 66, 0.2);
+            padding: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .over-analysis::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 200px;
+            background: radial-gradient(ellipse, rgba(245, 200, 66, 0.04) 0%, transparent 70%);
+            left: 50%;
+            transform: translateX(-50%);
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .over-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--gold);
+            text-align: center;
+            letter-spacing: 4px;
+            margin-bottom: 12px;
+            text-shadow: 0 0 15px rgba(245, 200, 66, 0.5);
+        }
+
+        .over-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+
+        .over-label {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.5);
+            width: 60px;
+            flex-shrink: 0;
+            letter-spacing: 1px;
+        }
+
+        .last-ball-display {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #e94560;
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .last-ball-label {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .last-ball-value {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 28px;
+            color: #e94560;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+        }
+
+        .ball-b {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: #111;
+            background: var(--gold);
+            box-shadow: 0 2px 10px rgba(245, 200, 66, 0.4);
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+            animation: ballPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .ball-b.six {
+            background: linear-gradient(135deg, #00e676, #00c853);
+            color: #000;
+            box-shadow: 0 2px 12px rgba(0, 230, 118, 0.5);
+        }
+
+        .ball-b.four {
+            background: linear-gradient(135deg, #1e90ff, #0060cc);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(30, 144, 255, 0.5);
+        }
+
+        .ball-b.dot {
+            background: linear-gradient(135deg, #333, #222);
+            color: #888;
+            box-shadow: none;
+        }
+
+        .ball-b.wide,
+        .ball-b.lb {
+            background: linear-gradient(135deg, #ff8c00, #cc6600);
+            color: #000;
+            font-size: 9px;
+        }
+
+        .ball-b.wicket {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(255, 68, 68, 0.6);
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .ball-b::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2), transparent 60%);
+        }
+
+        .ball-b:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .ball-b:nth-child(3) {
+            animation-delay: 0.15s;
+        }
+
+        .ball-b:nth-child(4) {
+            animation-delay: 0.2s;
+        }
+
+        .ball-b:nth-child(5) {
+            animation-delay: 0.25s;
+        }
+
+        .ball-b:nth-child(6) {
+            animation-delay: 0.3s;
+        }
+
+        .ball-b:nth-child(7) {
+            animation-delay: 0.35s;
+        }
+
+        @keyframes ballPop {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .over-equals {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gold);
+            margin-left: 4px;
+            text-shadow: 0 0 10px rgba(245, 200, 66, 0.6);
+        }
+
+        .diamond-icon {
+            width: 14px;
+            height: 14px;
+            background: linear-gradient(135deg, #00e676, #009944);
+            transform: rotate(45deg);
+            border-radius: 2px;
+            margin-left: 4px;
+            box-shadow: 0 0 8px rgba(0, 230, 118, 0.5);
+        }
+
+        /* Particle elements */
+        .p1 {
+            width: 4px;
+            height: 4px;
+            background: var(--gold);
+            bottom: 40px;
+            left: 20%;
+            animation-duration: 4s;
+            animation-delay: 0s;
+        }
+
+        .p2 {
+            width: 3px;
+            height: 3px;
+            background: var(--accent);
+            bottom: 60px;
+            left: 40%;
+            animation-duration: 5s;
+            animation-delay: 1s;
+        }
+
+        .p3 {
+            width: 5px;
+            height: 5px;
+            background: var(--green);
+            bottom: 30px;
+            left: 70%;
+            animation-duration: 3.5s;
+            animation-delay: 0.5s;
+        }
+
+        .p4 {
+            width: 3px;
+            height: 3px;
+            background: #fff;
+            bottom: 50px;
+            left: 85%;
+            animation-duration: 4.5s;
+            animation-delay: 2s;
+        }
+
+        .p5 {
+            width: 4px;
+            height: 4px;
+            background: var(--red);
+            bottom: 45px;
+            left: 10%;
+            animation-duration: 6s;
+            animation-delay: 1.5s;
+        }
+
+        /* Animated number counter glow */
+        .glow-num {
+            animation: numGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes numGlow {
+            from {
+                text-shadow: 0 0 10px rgba(245, 200, 66, 0.3);
+            }
+
+            to {
+                text-shadow: 0 0 25px rgba(245, 200, 66, 0.8), 0 0 50px rgba(245, 200, 66, 0.3);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+
+        <!-- ===== SCORE HEADER ===== -->
+        <div class="score-header">
+
+            <div class="live-badge-row">
+                <div class="live-dot"></div>
+                <div class="score-title-text">SCORE</div>
+                <div class="t20-badge">T20</div>
+            </div>
+
+            <!-- Toss/Status Display -->
+            <div class="toss-status" id="tossStatus" style="display: none;">
+                <span class="toss-text"></span>
+            </div>
+
+            <div class="teams-row">
+                <div class="team-block left">
+                    <div class="team-name">PAKISTAN</div>
+                    <div class="team-score-main glow-num">161<span
+                            style="font-size:18px;color:rgba(255,255,255,0.7)">-1</span></div>
+                    <div class="team-overs-small">(13.0 Overs)</div>
+                </div>
+
+                <div class="flags-center">
+                    <div class="flag-pair">
+                        <div class="flag-img">🇵🇰</div>
+                        <div class="vs-text">VS</div>
+                        <div class="flag-img">🇳🇿</div>
+                    </div>
+                </div>
+
+                <div class="team-block right">
+                    <div class="team-name">NEW ZEALAND</div>
+                    <div class="team-score-main">204<span style="font-size:18px">-10</span></div>
+                    <div class="team-overs-small">All Out</div>
+                </div>
+            </div>
+
+            <!-- Stats chips -->
+            <div class="stats-bar">
+                <div class="stat-chip">
+                    <div class="stat-label">CRR</div>
+                    <div class="stat-value highlight">12.38</div>
+                </div>
+                <div class="stat-chip">
+                    <div class="stat-label">RRR</div>
+                    <div class="stat-value">6.29</div>
+                </div>
+                <div class="stat-chip">
+                    <div class="stat-label">P'SHIP</div>
+                    <div class="stat-value">87(43)</div>
+                </div>
+                <div class="stat-chip">
+                    <div class="stat-label">PAK WIN</div>
+                    <div class="stat-value highlight">100%</div>
+                </div>
+            </div>
+
+            <!-- Win probability -->
+            <div class="winprob-bar">
+                <div class="winprob-labels">
+                    <div class="winprob-team pak">PAK 100%</div>
+                    <div class="winprob-team nz">NZ 0%</div>
+                </div>
+                <div class="winprob-track">
+                    <div class="winprob-fill"></div>
+                </div>
+            </div>
+
+            <!-- Last wicket scrolling -->
+            <div class="last-wkt">
+                <span class="last-wkt-scroll">
+                    <strong>⚡ LAST WKT:</strong>&nbsp; Mohammad Haris c Mitchell Hay b Jacob Duffy
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <strong>⚡ LAST WKT:</strong>&nbsp; Mohammad Haris c Mitchell Hay b Jacob Duffy
+                </span>
+            </div>
+
+        </div>
+
+        <!-- ===== STADIUM ===== -->
+        <div class="stadium-section">
+            <div class="stars"></div>
+
+            <div class="last-ball-center" id="lastBallCenter"
+                style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 10; flex-direction: row; gap: 8px;">
+            </div>
+
+            <!-- Crowd silhouette -->
+            <div class="crowd">
+                <svg class="crowd-svg" viewBox="0 0 430 70" preserveAspectRatio="none">
+                    <path
+                        d="M0,70 L0,50 Q10,30 20,45 Q30,20 40,40 Q50,10 60,35 Q70,15 80,40 Q90,25 100,42 Q110,18 120,38 Q130,28 140,44 Q150,12 160,36 Q170,22 180,42 Q190,8 200,35 Q210,18 220,40 Q230,25 240,44 Q250,15 260,38 Q270,28 280,42 Q290,10 300,36 Q310,20 320,40 Q330,28 340,44 Q350,15 360,38 Q370,25 380,42 Q390,18 400,40 Q415,22 430,44 L430,70 Z" />
+                </svg>
+
+            </div>
+
+            <!-- Floodlights -->
+            <div class="fl-tower left">
+                <div class="fl-head"></div>
+                <div class="fl-beam left-beam"></div>
+            </div>
+            <div class="fl-tower right">
+                <div class="fl-head"></div>
+                <div class="fl-beam right-beam"></div>
+            </div>
+
+            <!-- Ground -->
+            <div class="ground-ellipse"></div>
+            <div class="pitch-strip"></div>
+            <div class="stumps">
+                <div class="stump"></div>
+                <div class="stump"></div>
+                <div class="stump"></div>
+            </div>
+
+            <!-- Floating particles -->
+            <div class="particle p1"></div>
+            <div class="particle p2"></div>
+            <div class="particle p3"></div>
+            <div class="particle p4"></div>
+            <div class="particle p5"></div>
+        </div>
+
+        <!-- ===== PLAYERS ===== -->
+        <div class="players-section">
+            <div class="section-label">⚡ AT THE CREASE ⚡</div>
+
+            <div class="batters-row">
+                <!-- Agha Salman -->
+                <div class="player-card">
+                    <div class="avatar-wrap">
+                        🧔
+                        <div class="batting-ind">🏏</div>
+                    </div>
+                    <div class="player-name">AGHA SALMAN</div>
+                    <div class="player-score-row">
+                        <div class="p-score">35(23)</div>
+                    </div>
+                    <div class="p-stats">4S: <span>3</span> &nbsp;6S: <span>2</span> &nbsp;SR: <span>152.17</span></div>
+                    <div class="sr-bar-track">
+                        <div class="sr-bar-fill mid"></div>
+                    </div>
+                </div>
+
+                <!-- Hasan Nawaz -->
+                <div class="player-card">
+                    <div class="avatar-wrap" style="border-color:#f5c842; box-shadow: 0 0 12px rgba(245,200,66,0.5);">
+                        👨
+                        <div class="batting-ind">🏏</div>
+                    </div>
+                    <div class="player-name">HASAN NAWAZ</div>
+                    <div class="player-score-row">
+                        <div class="p-score" style="color:var(--gold); text-shadow: 0 0 15px rgba(245,200,66,0.5);">
+                            80(35)</div>
+                    </div>
+                    <div class="p-stats">4S: <span>8</span> &nbsp;6S: <span>5</span> &nbsp;SR: <span>228.57</span></div>
+                    <div class="sr-bar-track">
+                        <div class="sr-bar-fill high"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bowler -->
+            <div class="bowler-card">
+                <div class="bowler-avatar">🧑</div>
+                <div>
+                    <div class="player-name" style="color:rgba(255,150,150,0.8);">JACOB DUFFY</div>
+                    <div class="player-score-row">
+                        <div class="p-score" style="font-size:18px; color: #ff8888;">1-37 (3.0)</div>
+                        <div class="cricket-ball"></div>
+                    </div>
+                    <div class="p-stats" style="color:rgba(255,120,120,0.5);">ECON: <span
+                            style="color:#ff8c00;">12.33</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== OVER ANALYSIS ===== -->
+        <div class="over-analysis">
+            <div class="over-title">◆ OVER ANALYSIS ◆</div>
+
+            <!-- Last Ball Display -->
+            <div class="last-ball-display" id="lastBallDisplay" style="display: none;">
+                <div class="last-ball-label">LAST BALL</div>
+                <div class="last-ball-value" id="lastBallValue"></div>
+            </div>
+
+            <div class="over-row">
+                <div class="over-label">This Over</div>
+                <div class="ball-b six">6</div>
+                <div class="ball-b four">4</div>
+                <div class="ball-b">2</div>
+                <div class="ball-b dot">0</div>
+                <div class="ball-b six">6</div>
+                <div class="ball-b">1</div>
+                <div class="over-equals">= 19</div>
+            </div>
+
+            <div class="over-row">
+                <div class="over-label">Last Over</div>
+                <div class="ball-b four">4</div>
+                <div class="ball-b dot">0</div>
+                <div class="ball-b dot">0</div>
+                <div class="ball-b lb">1lb</div>
+                <div class="ball-b four">4</div>
+                <div class="ball-b">2</div>
+                <div class="over-equals">= 11</div>
+                <div class="diamond-icon"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ===== LIVE API INTEGRATION =====
+        const API_URL = (window.location.protocol === 'file:'
+            ? 'http://localhost:5555'
+            : window.location.origin) + '/score';
+
+        const REFRESH_MS = 2000;
+        const DEMO_FALLBACK_AFTER = 3;
+        let failCount = 0;
+        let demoMode = false;
+        let previousBallKey = null;  // Track to detect new deliveries for animation
+
+        // -------- Demo / fallback data --------
+        function getDemoData() {
+            return {
+                provider: 'crex',
+                matchInfo: {
+                    description: 'Dolphins vs Warriors, CSA DIV-1 2026',
+                    format: 'ODI',
+                    status: 'DOL opt to Bat',
+                    state: 'In Progress',
+                    venue: "St George's Park, Gqeberha",
+                    toss: 'DOL opt to Bat'
+                },
+                team1: {
+                    name: 'Dolphins', shortName: 'DOL', id: '6A',
+                    flagUrl: 'https://cricketvectors.akamaized.net/Teams/6A.png',
+                    jerseyUrl: 'https://cricketvectors.akamaized.net/jersey/limited/org/6A.png',
+                    gradient: '#3D884B'
+                },
+                team2: {
+                    name: 'Warriors', shortName: 'WAR', id: '6C',
+                    flagUrl: 'https://cricketvectors.akamaized.net/Teams/6C.png',
+                    jerseyUrl: 'https://cricketvectors.akamaized.net/jersey/limited/org/6C.png',
+                    gradient: '#646E2C'
+                },
+                currentInnings: 1,
+                innings: [
+                    { id: 1, battingTeam: 'Dolphins', battingTeamShort: 'DOL', score: 33, wickets: 1, overs: 7.0, runRate: '4.71' }
+                ],
+                miniscore: {
+                    inningsId: 1,
+                    overs: 7.0,
+                    currentRunRate: 4.71,
+                    requiredRunRate: 0,
+                    target: 0,
+                    remRunsToWin: 0,
+                    partnership: { runs: 20, balls: 25 },
+                    lastWicket: { name: 'Tshepang Dithole', runs: '5', balls: '(12)' },
+                    recentOvers: '',
+                    overByOver: [
+                        { over: 'Over 6', overinfo: ['0', '1', '0', '4', '0', '2'], total: 7 },
+                        { over: 'Over 7', overinfo: ['4', '0', '0', '0', '0', 'wd', '0'], total: 5 }
+                    ],
+                    batsmanStriker: {
+                        name: 'JJ Smuts', fullName: 'JJ Smuts',
+                        imageUrl: 'https://cricketvectors.akamaized.net/players/org/MO.png',
+                        runs: 15, balls: 19, fours: 2, sixes: 0, strikeRate: 78.95
+                    },
+                    batsmanNonStriker: {
+                        name: 'S van Staden', fullName: 'Slade van Staden',
+                        imageUrl: 'https://cricketvectors.akamaized.net/players/org/8IC.png',
+                        runs: 8, balls: 11, fours: 0, sixes: 0, strikeRate: 72.73
+                    },
+                    bowlerStriker: {
+                        name: 'K Mungroo', fullName: 'Kerwin Mungroo',
+                        imageUrl: 'https://cricketvectors.akamaized.net/players/org/1FA.png',
+                        overs: '4.0', maidens: 0, runs: 16, wickets: 1, economy: 4.0,
+                        figures: '1-16'
+                    }
+                },
+                timestamp: new Date().toISOString(),
+                error: null
+            };
+        }
+
+        // -------- Helper functions --------
+        function safe(v, fallback = '--') {
+            return (v !== null && v !== undefined && v !== '') ? v : fallback;
+        }
+
+        function getCountryFlag(teamName) {
+            const n = (teamName || '').toLowerCase();
+            const flags = {
+                pakistan: '🇵🇰', pak: '🇵🇰',
+                india: '🇮🇳', ind: '🇮🇳',
+                'new zealand': '🇳🇿', nz: '🇳🇿',
+                australia: '🇦🇺', aus: '🇦🇺',
+                england: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', eng: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+                'south africa': '🇿🇦', sa: '🇿🇦',
+                'sri lanka': '🇱🇰', sl: '🇱🇰',
+                bangladesh: '🇧🇩', ban: '🇧🇩',
+                'west indies': '🏏', wi: '🏏',
+                afghanistan: '🇦🇫', afg: '🇦🇫',
+                zimbabwe: '🇿🇼', zim: '🇿🇼',
+                ireland: '🇮🇪', ire: '🇮🇪',
+            };
+            for (const key in flags) {
+                if (n.includes(key)) return flags[key];
+            }
+            return '🏏';
+        }
+
+        /** Build flag HTML — use image URL if available, else emoji */
+        function flagHtml(teamObj, teamName) {
+            if (teamObj && teamObj.flagUrl) {
+                return `<img src="${teamObj.flagUrl}" alt="${teamObj.shortName || ''}" onerror="this.parentElement.textContent='🏏'">`;
+            }
+            return getCountryFlag(teamName);
+        }
+
+        /** Build player avatar HTML — use image URL if available, else emoji */
+        function avatarHtml(player, fallbackEmoji) {
+            if (player && player.imageUrl) {
+                return `<img src="${player.imageUrl}" alt="${player.name || ''}" onerror="this.parentElement.innerHTML='${fallbackEmoji || '🧑'}'">`;
+            }
+            return fallbackEmoji || '🧑';
+        }
+
+        function getSRClass(sr) {
+            if (sr >= 150) return 'high';
+            if (sr >= 100) return 'mid';
+            return 'low';
+        }
+
+        /** Parse the recentOvers string like "6,4,2,0,6,1|4,0,0,1lb,4,2" or "1 1 1 0 1 2|1 0 0 0 4 2"
+         *  Also handles format like "Over 45: 1 1 1 0 1 2 = 6 | Over 46: 1 0 0 0 4 2 = 7"
+         *  Returns {thisOver:[...], lastOver:[...]} */
+        function parseRecentOvers(str) {
+            if (!str) return { thisOver: [], lastOver: [] };
+            // Remove "Over X:" and "= Y" patterns, then replace spaces with commas
+            const normalized = str
+                .replace(/Over \d+:/g, '')
+                .replace(/= \d+/g, '')
+                .replace(/\s+/g, ',');
+            const parts = normalized.split('|');
+            const parse = (s) => s ? s.split(',').map(b => b.trim()).filter(Boolean) : [];
+            if (parts.length >= 2) {
+                return { thisOver: parse(parts[parts.length - 1]), lastOver: parse(parts[parts.length - 2]) };
+            }
+            return { thisOver: parse(parts[0]), lastOver: [] };
+        }
+
+        /** Parse CREX overByOver array into thisOver/lastOver format */
+        function parseCrexOvers(overByOver) {
+            if (!overByOver || overByOver.length === 0) return { thisOver: [], lastOver: [], allOvers: [] };
+            const last = overByOver[overByOver.length - 1];
+            const prev = overByOver.length >= 2 ? overByOver[overByOver.length - 2] : null;
+            return {
+                thisOver: last ? last.overinfo || [] : [],
+                thisOverLabel: last ? last.over : 'This Over',
+                thisOverTotal: last ? last.total : 0,
+                lastOver: prev ? prev.overinfo || [] : [],
+                lastOverLabel: prev ? prev.over : 'Last Over',
+                lastOverTotal: prev ? prev.total : 0,
+                allOvers: overByOver
+            };
+        }
+
+        function ballClass(ball) {
+            const b = String(ball).toLowerCase();
+            if (b === '6') return 'six';
+            if (b === '4') return 'four';
+            if (b === '0') return 'dot';
+            if (b === 'w' || b === 'W') return 'wicket';
+            if (b.includes('wd') || b === 'wd') return 'wide lb';
+            if (b.includes('lb') || b.includes('nb')) return 'lb';
+            if (b.includes('w') && b !== 'wd') return 'wide lb';
+            return '';
+        }
+
+        function renderBalls(balls) {
+            return balls.map(b => `<div class="ball-b ${ballClass(b)}">${b}</div>`).join('');
+        }
+
+        function overTotal(balls) {
+            let total = 0;
+            balls.forEach(b => {
+                const num = parseInt(b);
+                if (!isNaN(num)) total += num;
+            });
+            return total;
+        }
+
+        /** Format lastWicket — handles both string and CREX object */
+        function formatLastWicket(lw) {
+            if (!lw) return null;
+            if (typeof lw === 'string') return lw;
+            // CREX object: { name, runs, balls, fkey, slug }
+            if (lw.name) {
+                return `${lw.name} ${lw.runs || 0}${lw.balls || ''}`;
+            }
+            return null;
+        }
+
+        // -------- Main render function --------
+        function render(data) {
+            const mini = data.miniscore || {};
+            const innings = data.innings || [];
+            const team1 = data.team1 || {};
+            const team2 = data.team2 || {};
+            const info = data.matchInfo || {};
+            const isCREX = data.provider === 'crex';
+
+            // Identify batting & fielding innings
+            const currentInn = innings.length > 0 ? innings[innings.length - 1] : null;
+            const prevInn = innings.length > 1 ? innings[innings.length - 2] : null;
+
+            // Format badge (T20 / ODI / Test / List-A)
+            const fmt = (info.format || '').toUpperCase();
+            let fmtLabel = 'LIVE';
+            if (fmt.includes('T20') || fmt.includes('T10')) fmtLabel = 'T20';
+            else if (fmt.includes('ODI') || fmt.includes('LIST')) fmtLabel = 'ODI';
+            else if (fmt.includes('TEST') || fmt.includes('FC')) fmtLabel = 'TEST';
+            else if (fmt) fmtLabel = fmt.substring(0, 5);
+            document.querySelector('.t20-badge').textContent = fmtLabel;
+
+            // ===== SCORE HEADER =====
+
+            // Determine batting team (left) and fielding team (right)
+            // For CREX first innings: team1 is batting, team2 is fielding
+            const batTeam = currentInn ? currentInn.battingTeam || currentInn.battingTeamShort : team1.name;
+            const batShort = currentInn ? (currentInn.battingTeamShort || currentInn.battingTeam || team1.shortName) : team1.shortName;
+            const batScore = currentInn ? currentInn.score : 0;
+            const batWkts = currentInn ? currentInn.wickets : 0;
+            const batOvers = mini.overs !== undefined ? mini.overs : (currentInn ? currentInn.overs : 0);
+
+            // Determine which team object is batting vs fielding for flag URLs
+            let batTeamObj = team1;
+            let fieldTeamObj = team2;
+            if (currentInn) {
+                const batId = currentInn.battingTeamId;
+                if (batId === team2.id || (currentInn.battingTeamShort || '').toUpperCase() === (team2.shortName || '').toUpperCase()) {
+                    batTeamObj = team2;
+                    fieldTeamObj = team1;
+                }
+            }
+
+            // Team 2 (right — previous innings / fielding)
+            const fieldTeam = prevInn ? prevInn.battingTeam || prevInn.battingTeamShort : fieldTeamObj.name;
+            const fieldShort = prevInn ? (prevInn.battingTeamShort || prevInn.battingTeam || fieldTeamObj.shortName) : fieldTeamObj.shortName;
+            const fieldScore = prevInn ? prevInn.score : 0;
+            const fieldWkts = prevInn ? prevInn.wickets : 0;
+            const fieldOvers = prevInn ? prevInn.overs : 0;
+
+            // Left team block (batting)
+            const leftBlock = document.querySelector('.team-block.left');
+            leftBlock.querySelector('.team-name').textContent = (batShort || batTeam || '--').toUpperCase();
+            leftBlock.querySelector('.team-score-main').innerHTML =
+                `${safe(batScore, 0)}<span style="font-size:18px;color:rgba(255,255,255,0.7)">-${safe(batWkts, 0)}</span>`;
+            leftBlock.querySelector('.team-overs-small').textContent =
+                `(${safe(batOvers, 0)} Overs)`;
+
+            // Apply team gradient color to left block if available
+            if (batTeamObj.gradient) {
+                leftBlock.querySelector('.team-score-main').style.textShadow = `0 0 20px ${batTeamObj.gradient}`;
+            }
+
+            // Right team block (fielding / previous innings)
+            const rightBlock = document.querySelector('.team-block.right');
+            rightBlock.querySelector('.team-name').textContent = (fieldShort || fieldTeam || '--').toUpperCase();
+            const fieldWktsLabel = fieldWkts >= 10 ? 'All Out' : '';
+            rightBlock.querySelector('.team-score-main').innerHTML =
+                prevInn ? `${safe(fieldScore, 0)}<span style="font-size:18px">-${safe(fieldWkts, 0)}</span>` :
+                    `<span style="font-size:18px;color:rgba(255,255,255,0.3)">Yet to bat</span>`;
+            rightBlock.querySelector('.team-overs-small').textContent =
+                prevInn ? (fieldWktsLabel || `(${safe(fieldOvers, 0)} Overs)`) : '';
+
+            // Flags — use CREX image URLs if available
+            const flagPair = document.querySelector('.flag-pair');
+            flagPair.innerHTML = `
+                <div class="flag-img">${flagHtml(batTeamObj, batTeam)}</div>
+                <div class="vs-text">VS</div>
+                <div class="flag-img">${flagHtml(fieldTeamObj, fieldTeam)}</div>`;
+
+            // Show last ball on pitch area (above the over display)
+            try {
+                // Last ball display is now handled in the section after thisOver is populated
+                // See section around line 2075 for the actual last ball display logic
+            } catch (e) {
+                console.log('Last ball error:', e);
+            }
+
+            // Win probability — derive from requiredRunRate vs currentRunRate or remRunsToWin
+            let batWinPct = 50;
+            if (mini.requiredRunRate && mini.currentRunRate && parseFloat(mini.requiredRunRate) > 0) {
+                const crr = parseFloat(mini.currentRunRate) || 0;
+                const rrr = parseFloat(mini.requiredRunRate) || 0;
+                if (rrr > 0) {
+                    const ratio = Math.min(crr / rrr, 3);
+                    batWinPct = Math.min(95, Math.max(5, Math.round(50 * ratio)));
+                }
+            } else if (mini.remRunsToWin && mini.remRunsToWin > 0) {
+                const rem = parseInt(mini.remRunsToWin) || 0;
+                const target = parseInt(mini.target) || (fieldScore + 1);
+                batWinPct = rem <= 0 ? 100 : Math.min(95, Math.max(5, Math.round(100 - (rem / target) * 100)));
+            } else if (innings.length === 1) {
+                // First innings — no win probability yet, show 50/50
+                batWinPct = 50;
+            }
+            const fieldWinPct = 100 - batWinPct;
+
+            document.querySelector('.winprob-team.pak').textContent = `${batShort || 'BAT'} ${batWinPct}%`;
+            document.querySelector('.winprob-team.nz').textContent = `${fieldShort || 'FIELD'} ${fieldWinPct}%`;
+            document.querySelector('.winprob-fill').style.width = `${batWinPct}%`;
+
+            // Stats chips: CRR, RRR, P'SHIP, WIN%
+            const chips = document.querySelectorAll('.stat-chip .stat-value');
+            if (chips.length >= 4) {
+                chips[0].textContent = safe(mini.currentRunRate ? parseFloat(mini.currentRunRate).toFixed(2) : null, '--');
+                const rrr = mini.requiredRunRate ? parseFloat(mini.requiredRunRate) : 0;
+                chips[1].textContent = rrr > 0 ? rrr.toFixed(2) : '--';
+                const pship = mini.partnership;
+                chips[2].textContent = pship ? `${pship.runs}(${pship.balls})` : '--';
+                chips[3].textContent = batWinPct + '%';
+            }
+            const chipLabels = document.querySelectorAll('.stat-chip .stat-label');
+            if (chipLabels.length >= 4) chipLabels[3].textContent = (batShort || 'BAT') + ' WIN';
+
+            // Toss/Status Display - show "DOL opt to Bat" like CREX
+            const tossStatusEl = document.getElementById('tossStatus');
+            if (tossStatusEl) {
+                tossStatusEl.style.display = 'none';
+            }
+
+            // Last wicket ticker
+            const lwFormatted = formatLastWicket(mini.lastWicket);
+            if (lwFormatted) {
+                const lwText = `<strong>⚡ LAST WKT:</strong>&nbsp; ${lwFormatted}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>⚡ LAST WKT:</strong>&nbsp; ${lwFormatted}`;
+                document.querySelector('.last-wkt-scroll').innerHTML = lwText;
+                document.querySelector('.last-wkt').style.display = '';
+            } else if (info.status) {
+                document.querySelector('.last-wkt-scroll').innerHTML = `<strong>📢</strong>&nbsp; ${info.status}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>📢</strong>&nbsp; ${info.status}`;
+                document.querySelector('.last-wkt').style.display = '';
+            }
+
+            // ===== PLAYERS SECTION =====
+            const striker = mini.batsmanStriker;
+            const nonStriker = mini.batsmanNonStriker;
+            const bowler = mini.bowlerStriker;
+
+            const playerCards = document.querySelectorAll('.player-card');
+
+            // Card 0 — non-striker (left card)
+            if (playerCards[0]) {
+                const p = nonStriker || striker;
+                const sr0 = p ? parseFloat(p.strikeRate) || 0 : 0;
+                // Avatar — use CREX image if available
+                const avatarEl = playerCards[0].querySelector('.avatar-wrap');
+                const indHtml = '<div class="batting-ind">🏏</div>';
+                avatarEl.innerHTML = avatarHtml(p, '🧔') + indHtml;
+                playerCards[0].querySelector('.player-name').textContent = p ? (p.fullName || p.name || '--').toUpperCase() : '--';
+                playerCards[0].querySelector('.p-score').textContent = p ? `${p.runs}(${p.balls})` : '--(--) ';
+                playerCards[0].querySelector('.p-stats').innerHTML = p
+                    ? `4S: <span>${p.fours || 0}</span> &nbsp;6S: <span>${p.sixes || 0}</span> &nbsp;SR: <span>${sr0.toFixed(1)}</span>`
+                    : '4S: <span>0</span> &nbsp;6S: <span>0</span> &nbsp;SR: <span>0.0</span>';
+                const srFill0 = playerCards[0].querySelector('.sr-bar-fill');
+                srFill0.className = `sr-bar-fill ${getSRClass(sr0)}`;
+            }
+
+            // Card 1 — striker (right card — highlighted gold)
+            if (playerCards[1]) {
+                const p = striker || nonStriker;
+                const sr1 = p ? parseFloat(p.strikeRate) || 0 : 0;
+                // Avatar — use CREX image if available
+                const avatarEl = playerCards[1].querySelector('.avatar-wrap');
+                const indHtml = '<div class="batting-ind">🏏</div>';
+                avatarEl.innerHTML = avatarHtml(p, '👨') + indHtml;
+                // Highlight striker with gold border
+                avatarEl.style.borderColor = '#f5c842';
+                avatarEl.style.boxShadow = '0 0 12px rgba(245,200,66,0.5)';
+                playerCards[1].querySelector('.player-name').textContent = p ? (p.fullName || p.name || '--').toUpperCase() : '--';
+                playerCards[1].querySelector('.p-score').textContent = p ? `${p.runs}(${p.balls})` : '--(--) ';
+                playerCards[1].querySelector('.p-score').style.color = 'var(--gold)';
+                playerCards[1].querySelector('.p-score').style.textShadow = '0 0 15px rgba(245,200,66,0.5)';
+                playerCards[1].querySelector('.p-stats').innerHTML = p
+                    ? `4S: <span>${p.fours || 0}</span> &nbsp;6S: <span>${p.sixes || 0}</span> &nbsp;SR: <span>${sr1.toFixed(1)}</span>`
+                    : '4S: <span>0</span> &nbsp;6S: <span>0</span> &nbsp;SR: <span>0.0</span>';
+                const srFill1 = playerCards[1].querySelector('.sr-bar-fill');
+                srFill1.className = `sr-bar-fill ${getSRClass(sr1)}`;
+            }
+
+            // Bowler card
+            const bowlerAvatarEl = document.querySelector('.bowler-avatar');
+            const bowlerNameEl = document.querySelector('.bowler-card .player-name');
+            const bowlerScoreEl = document.querySelector('.bowler-card .p-score');
+            const bowlerStatsEl = document.querySelector('.bowler-card .p-stats');
+            if (bowler) {
+                bowlerAvatarEl.innerHTML = avatarHtml(bowler, '🧑');
+                bowlerNameEl.textContent = (bowler.fullName || bowler.name || '--').toUpperCase();
+                const figures = bowler.figures || `${bowler.wickets || 0}-${bowler.runs || 0}`;
+                bowlerScoreEl.textContent = `${figures} (${bowler.overs || 0})`;
+                const econ = parseFloat(bowler.economy) || 0;
+                bowlerStatsEl.innerHTML = `ECON: <span style="color:#ff8c00;">${econ.toFixed(2)}</span>`;
+            } else {
+                bowlerAvatarEl.innerHTML = '🧑';
+                bowlerNameEl.textContent = '--';
+                bowlerScoreEl.textContent = '-';
+                bowlerStatsEl.innerHTML = 'ECON: <span>-</span>';
+            }
+
+            // ===== OVER ANALYSIS =====
+            // Use CREX overByOver if available, else fall back to recentOvers string
+            let thisOver, lastOver, thisOverLabel, lastOverLabel, thisOverTotal, lastOverTotal;
+
+            if (mini.overByOver && mini.overByOver.length > 0) {
+                const parsed = parseCrexOvers(mini.overByOver);
+                thisOver = parsed.thisOver;
+                lastOver = parsed.lastOver;
+                thisOverLabel = parsed.thisOverLabel || 'This Over';
+                lastOverLabel = parsed.lastOverLabel || 'Last Over';
+                thisOverTotal = parsed.thisOverTotal;
+                lastOverTotal = parsed.lastOverTotal;
+            } else {
+                console.log('DEBUG: Using recentOvers, mini.recentOvers:', mini.recentOvers);
+                const parsed = parseRecentOvers(mini.recentOvers || '');
+                thisOver = parsed.thisOver;
+                lastOver = parsed.lastOver;
+                thisOverLabel = 'This Over';
+                lastOverLabel = 'Last Over';
+                thisOverTotal = overTotal(thisOver);
+                lastOverTotal = overTotal(lastOver);
+            }
+
+            const overRows = document.querySelectorAll('.over-row');
+
+            if (overRows[0]) {
+                overRows[0].innerHTML = `
+                    <div class="over-label">${thisOverLabel}</div>
+                    ${thisOver.length > 0 ? renderBalls(thisOver) : '<div class="ball-b dot" style="opacity:0.3">-</div>'}
+                    <div class="over-equals">= ${thisOverTotal}</div>`;
+            }
+
+            if (overRows[1]) {
+                overRows[1].innerHTML = `
+                    <div class="over-label">${lastOverLabel}</div>
+                    ${lastOver.length > 0 ? renderBalls(lastOver) : '<div class="ball-b dot" style="opacity:0.3">-</div>'}
+                    <div class="over-equals">= ${lastOverTotal}</div>
+                    <div class="diamond-icon"></div>`;
+            }
+
+            // ===== CREX-STYLE LAST BALL (permanent, between scores) =====
+            try {
+                const lastBallCenter = document.getElementById('lastBallCenter');
+                if (lastBallCenter && thisOver && thisOver.length > 0) {
+                    const currentBall = thisOver[thisOver.length - 1];
+                    const b = String(currentBall).toLowerCase();
+                    const ballKey = thisOver.join(',');
+
+                    let displayValue = currentBall;
+                    let displayLabel = '';
+                    let colorClass = '';
+
+                    if (b === 'w') {
+                        displayValue = 'W';
+                        displayLabel = '';
+                        colorClass = 'wicket';
+                    } else if (b === '6') {
+                        displayValue = '6';
+                        displayLabel = 'SIX';
+                        colorClass = 'six';
+                    } else if (b === '4') {
+                        displayValue = '4';
+                        displayLabel = 'FOUR';
+                        colorClass = 'four';
+                    } else if (b === '0') {
+                        displayValue = 'DOT';
+                        displayLabel = 'BALL';
+                        colorClass = 'dot';
+                    } else if (b.includes('wd') || b === 'wd') {
+                        displayValue = 'WD';
+                        displayLabel = 'WIDE';
+                        colorClass = 'wide';
+                    } else if (b.includes('nb')) {
+                        displayValue = 'NB';
+                        displayLabel = 'NO BALL';
+                        colorClass = 'wide';
+                    } else if (b.includes('lb')) {
+                        displayValue = b.toUpperCase();
+                        displayLabel = 'LEG BYE';
+                        colorClass = 'wide';
+                    } else {
+                        displayValue = currentBall;
+                        displayLabel = parseInt(b) > 0 ? 'RUNS' : '';
+                        colorClass = '';
+                    }
+
+                    // Add pop animation only when ball changes
+                    const popClass = (ballKey !== previousBallKey) ? ' pop' : '';
+                    previousBallKey = ballKey;
+
+                    lastBallCenter.innerHTML = `
+                        <div class="last-ball-number ${colorClass}${popClass}">${displayValue}</div>
+                        <div class="last-ball-desc">${displayLabel}</div>`;
+                } else if (lastBallCenter) {
+                    lastBallCenter.innerHTML = '';
+                }
+            } catch (e) {
+                console.error('Last ball error:', e);
+            }
+
+            // Status / match title in the top badge row
+            const titleEl = document.querySelector('.score-title-text');
+            if (info.state === 'Complete' || info.state === 'complete') {
+                titleEl.textContent = 'FINAL';
+            } else {
+                titleEl.textContent = 'LIVE';
+            }
+        }
+
+        // -------- Fetch loop --------
+        async function fetchAndRender() {
+            try {
+                const res = await fetch(API_URL, { cache: 'no-store' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                failCount = 0;
+                demoMode = false;
+                render(data);
+            } catch (e) {
+                failCount++;
+                if (failCount >= DEMO_FALLBACK_AFTER && !demoMode) {
+                    demoMode = true;
+                    console.warn('[demo.html] Server unreachable — using demo data');
+                }
+                if (demoMode) render(getDemoData());
+            }
+        }
+
+        // Initial load + polling
+        fetchAndRender();
+        setInterval(fetchAndRender, REFRESH_MS);
+    </script>
+
+</body>
+
+</html>

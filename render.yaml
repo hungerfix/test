@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: cricket-score-server
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node live_score_server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
